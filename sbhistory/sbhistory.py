@@ -52,18 +52,23 @@ class Multisma2:
                 logger.info("Received KeyboardInterrupt during shutdown")
 
     async def _astart(self):
-        logfiles.create_application_log(logger)
-        logger.info(f"multisma2 inverter production history utility {version.get_version()}")
+        try:
+            logfiles.create_application_log(logger)
+            logger.info(f"multisma2 inverter production history utility {version.get_version()}")
 
-        self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-        self._site = Site(self._session)
-        result = await self._site.start()
-        if not result:
+            self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+            self._site = Site(self._session)
+            result = await self._site.start()
+            if not result:
+                raise Multisma2.FailedInitialization
+        except:
             raise Multisma2.FailedInitialization
 
     async def _astop(self):
-        await self._site.stop()
-        await self._session.close()
+        if self._site:
+            await self._site.stop()
+        if self._session:
+            await self._session.close()
         logfiles.stop()
 
     async def _await(self):

@@ -4,9 +4,7 @@ import os
 import sys
 import logging
 from datetime import datetime
-
 from config import config_from_yaml
-cfg = config_from_yaml(data='sbhistory.yaml', read_from_file=True)
 
 logger = logging.getLogger('sbhistory')
 
@@ -27,6 +25,9 @@ def stop():
 
 def create_application_log(app_logger):
     """Create the application log."""
+    yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+    cfg = config_from_yaml(data=yaml_file, read_from_file=True)
+
     now = datetime.now()
     filename = os.path.expanduser(
         cfg.log.file + "_" + now.strftime("%Y-%m-%d") + ".log"

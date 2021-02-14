@@ -1,5 +1,6 @@
 """Code to interface with the SMA inverters and return the results."""
 
+import os
 import asyncio
 import logging
 import dateutil
@@ -14,7 +15,6 @@ from astral.sun import sun
 from astral import LocationInfo
 
 from config import config_from_yaml
-cfg = config_from_yaml(data='sbhistory.yaml', read_from_file=True)
 
 logger = logging.getLogger('sbhistory')
 
@@ -27,6 +27,9 @@ class Site:
     """Class to describe a PV site with one or more inverters."""
     def __init__(self, session):
         """Create a new Site object."""
+        yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+        cfg = self._cfg = config_from_yaml(data=yaml_file, read_from_file=True)
+
         self._influx = InfluxDB(cfg.influxdb2.enable)
         self._inverters = []
         for inverter in cfg.inverters:
@@ -35,6 +38,7 @@ class Site:
 
     async def start(self):
         """Initialize the Site object."""
+        cfg = self._cfg
         if not self._influx.start(url=cfg.influxdb2.url, bucket=cfg.influxdb2.bucket, org=cfg.influxdb2.org, token=cfg.influxdb2.token):
             return False
         results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
@@ -47,6 +51,7 @@ class Site:
 
     # daily totals, day increments
     async def populate_daily_history(self):
+        cfg = self._cfg
         now = datetime.datetime.now()
         start = datetime.datetime(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
         stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
@@ -105,6 +110,7 @@ class Site:
 
     # fine production, 5 minute increments
     async def populate_fine_history(self):
+        cfg = self._cfg
         delta = datetime.timedelta(days=1)
         date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
         end_date = datetime.date.today() + delta
@@ -176,6 +182,7 @@ class Site:
 #        print()
 
     async def run(self):
+        cfg = self._cfg
         if cfg.sbhistory.daily_history:
             await self.populate_daily_history()
         if cfg.sbhistory.fine_history:
