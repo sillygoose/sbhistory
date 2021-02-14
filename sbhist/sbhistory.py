@@ -1,5 +1,5 @@
 """Code to interface with the SMA inverters and return the results."""
-# Robust initialization and shutdown code courtesy of 
+# Robust initialization and shutdown code courtesy of
 # https://github.com/wbenny/python-graceful-shutdown.git
 
 import logging
@@ -20,6 +20,7 @@ logger = logging.getLogger('sbhistory')
 class Multisma2:
     class NormalCompletion(Exception):
         pass
+
     class FailedInitialization(Exception):
         pass
 
@@ -57,7 +58,8 @@ class Multisma2:
         self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
         self._site = Site(self._session)
         result = await self._site.start()
-        if not result: raise Multisma2.FailedInitialization
+        if not result:
+            raise Multisma2.FailedInitialization
 
     async def _astop(self):
         await self._site.stop()

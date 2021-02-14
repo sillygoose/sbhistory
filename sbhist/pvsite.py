@@ -3,10 +3,9 @@
 import asyncio
 import logging
 import dateutil
-from dateutil.rrule import rrule, MONTHLY
 import datetime
 import clearsky
-from pprint import pprint
+# from pprint import pprint
 
 from inverter import Inverter
 from influx import InfluxDB
@@ -61,7 +60,7 @@ class Site:
             end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
             delta = datetime.timedelta(days=1)
             while date < end_date:
-                print(f"f", end='')
+                print("*", end='')
                 newtime = datetime.datetime.combine(date, datetime.time(0, 0))
                 t = int(newtime.timestamp())
                 inverter.append({'t': t, 'v': 0})
@@ -81,7 +80,7 @@ class Site:
         for inverter in inverters:
             last_non_null = None
             for i in range(1, len(inverter)):
-                print(f".", end='')
+                print(".", end='')
                 t = inverter[i]['t']
                 v = inverter[i]['v']
                 if v is None:
@@ -101,7 +100,7 @@ class Site:
         inverters.append(site_total)
         self._influx.write_history(inverters, 'production/today')
         print()
-    
+
     # daily production, 5 minute increments, seems only available for the current year
     async def populate_fine_history(self):
         delta = datetime.timedelta(days=1)
@@ -110,7 +109,7 @@ class Site:
         print(f"Populating daily production values from {date} to {end_date}")
 
         while date < end_date:
-            print(f".", end='')
+            print(".", end='')
             start = datetime.datetime.combine(date, datetime.time(0, 0)) - datetime.timedelta(minutes=5)
             stop = start + delta
 
@@ -153,12 +152,12 @@ class Site:
 
         lp_points = []
         while date < end_date:
-            print(f".", end='')
+            print(".", end='')
             astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
             dawn = astral['dawn']
             dusk = astral['dusk'] + datetime.timedelta(minutes=10)
-            start = datetime.datetime(dawn.year, dawn.month, dawn.day, dawn.hour, int(int(dawn.minute/10)*10))
-            stop = datetime.datetime(dusk.year, dusk.month, dusk.day, dusk.hour, int(int(dusk.minute/10)*10))
+            start = datetime.datetime(dawn.year, dawn.month, dawn.day, dawn.hour, int(int(dawn.minute / 10) * 10))
+            stop = datetime.datetime(dusk.year, dusk.month, dusk.day, dusk.hour, int(int(dusk.minute / 10) * 10))
 
             # Get irradiance data for today and convert to InfluxDB line protocol
             irradiance = clearsky.get_irradiance(site=site, start=start.strftime("%Y-%m-%d %H:%M:00"), end=stop.strftime("%Y-%m-%d %H:%M:00"), tilt=cfg['solar_properties.tilt'], azimuth=cfg['solar_properties.azimuth'], freq='10min')
@@ -173,6 +172,9 @@ class Site:
         print()
 
     async def run(self):
-        if cfg.sbhistory.daily_history: await self.populate_daily_history()
-        if cfg.sbhistory.fine_history: await self.populate_fine_history()
-        if cfg.sbhistory.irradiance_history: await self.populate_irradiance()
+        if cfg.sbhistory.daily_history:
+            await self.populate_daily_history()
+        if cfg.sbhistory.fine_history:
+            await self.populate_fine_history()
+        if cfg.sbhistory.irradiance_history:
+            await self.populate_irradiance()

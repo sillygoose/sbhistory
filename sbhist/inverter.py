@@ -1,8 +1,6 @@
 """Code to interface with the SMA inverters and return the results."""
 
 import logging
-from pprint import pprint
-
 import sma
 
 

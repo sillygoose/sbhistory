@@ -4,7 +4,6 @@
 # https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/
 
 import logging
-from pprint import pprint
 
 from influxdb_client import InfluxDBClient, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -48,9 +47,10 @@ class InfluxDB():
             self._write_api.close()
             self._write_api = None
         if self._client:
+            bucket = self._bucket
             self._client.close()
             self._client = None
-            logger.info(f"Closed the InfluxDB database")
+            logger.info(f"Closed the InfluxDB bucket {bucket}")
 
     def write_points(self, points):
         if not self._write_api:
@@ -83,7 +83,7 @@ class InfluxDB():
                 t = history['t']
                 v = history['v']
                 if v is None:
-                    #logger.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
+                    # logger.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
                     continue
                 elif isinstance(v, int):
                     lp = f'{measurement},inverter={name} {field}={v}i {t}'

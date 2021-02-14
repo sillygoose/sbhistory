@@ -4,7 +4,6 @@ import pandas as pd
 from pvlib import location, irradiance
 
 import logging
-from pprint import pprint
 
 
 logger = logging.getLogger('sbhistory')
@@ -14,6 +13,7 @@ def site_location(latitude, longitude, tz):
     site = location.Location(latitude, longitude, tz)
     return site
 
+
 def get_irradiance(site, start, end, tilt, azimuth, freq):
     """Calculate the clear-sky POA (plane of array) irradiance."""
     # Creates one day's worth of intervals
@@ -22,10 +22,10 @@ def get_irradiance(site, start, end, tilt, azimuth, freq):
     # Generate clearsky data using the Ineichen model, which is the default
     # The get_clearsky method returns a dataframe with values for GHI, DNI, and DHI
     clearsky = site.get_clearsky(times)
-    
+
     # Get solar azimuth and zenith to pass to the transposition function
     solar_position = site.get_solarposition(times=times)
-    
+
     # Use the get_total_irradiance function to transpose the GHI to POA
     POA_irradiance = irradiance.get_total_irradiance(
         surface_tilt=tilt,
