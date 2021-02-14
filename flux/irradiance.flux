@@ -11,7 +11,7 @@ days_to_visualize = -5d     // Visualize the last 5 days of site total productio
 // Collect the site total production data
 from(bucket: "multisma2")
   |> range(start: days_to_visualize)
-  |> filter(fn: (r) => r._measurement == "production" and r._field == "total" and r.inverter == "site")
+  |> filter(fn: (r) => r._measurement == "production" and r._field == "daily" and r._inverter == "site")
   |> elapsed(unit: 1s)
   |> difference(nonNegative: true, columns: ["_value"])
   |> map(fn: (r) => ({ r with _value: float(v: r._value) * 3600.0 / float(v: r.elapsed) }))
@@ -21,5 +21,5 @@ from(bucket: "multisma2")
 // Collect the irradiance data
 from(bucket: "multisma2")
   |> range(start: days_to_visualize)
-  |> filter(fn: (r) => r._measurement == "production" and (r._field == "irradiance"))
+  |> filter(fn: (r) => r._measurement == "production" and r._field == "irradiance")
   |> yield(name: "irradiance")

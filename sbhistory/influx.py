@@ -21,8 +21,8 @@ LP_LOOKUP = {
     'status/general_operating_status': {'measurement': 'status', 'field': 'operating_status'},
     'status/grid_relay': {'measurement': 'status', 'field': 'grid_relay'},
     'status/condition': {'measurement': 'status', 'field': 'condition'},
-    'production/total': {'measurement': 'production', 'field': 'total'},
-    'production/today': {'measurement': 'production', 'field': 'today'},
+    'production/daily': {'measurement': 'production', 'field': 'daily'},
+    'production/midnight': {'measurement': 'production', 'field': 'midnight'},
 }
 
 
@@ -50,7 +50,7 @@ class InfluxDB():
             bucket = self._bucket
             self._client.close()
             self._client = None
-            logger.info(f"Closed the InfluxDB bucket {bucket}")
+            logger.info(f"Closed the InfluxDB bucket '{bucket}'")
 
     def write_points(self, points):
         if not self._write_api:
@@ -78,7 +78,7 @@ class InfluxDB():
         lps = []
         for inverter in site:
             inverter_name = inverter.pop(0)
-            name = inverter_name['inverter']
+            name = inverter_name.get('inverter', 'sunnyboy')
             for history in inverter:
                 t = history['t']
                 v = history['v']
@@ -86,7 +86,7 @@ class InfluxDB():
                     # logger.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
                     continue
                 elif isinstance(v, int):
-                    lp = f'{measurement},inverter={name} {field}={v}i {t}'
+                    lp = f'{measurement},_inverter={name} {field}={v}i {t}'
                     lps.append(lp)
                 else:
                     logger.error(f"write_history(): unanticipated type '{type(v)}' in measurement '{measurement}/{field}'")

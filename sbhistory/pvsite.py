@@ -50,7 +50,7 @@ class Site:
         now = datetime.datetime.now()
         start = datetime.datetime(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
         stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
-        print(f"Populating daily total production values from {start.date()} to {stop.date()}")
+        print(f"Populating daily history values from {start.date()} to {stop.date()}")
 
         inverters = await asyncio.gather(*(inverter.read_history(int(start.timestamp()), int(stop.timestamp())) for inverter in self._inverters))
         for inverter in inverters:
@@ -60,7 +60,7 @@ class Site:
             end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
             delta = datetime.timedelta(days=1)
             while date < end_date:
-                print("*", end='')
+                print(".", end='')
                 newtime = datetime.datetime.combine(date, datetime.time(0, 0))
                 t = int(newtime.timestamp())
                 inverter.append({'t': t, 'v': 0})
@@ -92,24 +92,25 @@ class Site:
                 count[t] = count.get(t, 0) + 1
                 last_non_null = v
 
-        site_total = []
-        for t, v in total.items():
-            if count[t] == len(inverters):
-                site_total.append({'t': t, 'v': v})
-        site_total.insert(0, {'inverter': 'site'})
-        inverters.append(site_total)
-        self._influx.write_history(inverters, 'production/today')
+        # Site output if multiple inverters
+        if len(inverters) > 1:
+            site_total = []
+            for t, v in total.items():
+                if count[t] == len(inverters):
+                    site_total.append({'t': t, 'v': v})
+            site_total.insert(0, {'inverter': 'site'})
+            inverters.append(site_total)
+        self._influx.write_history(inverters, 'production/midnight')
         print()
 
-    # daily production, 5 minute increments, seems only available for the current year
+    # fine production, 5 minute increments
     async def populate_fine_history(self):
         delta = datetime.timedelta(days=1)
         date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
         end_date = datetime.date.today() + delta
-        print(f"Populating daily production values from {date} to {end_date}")
+        print(f"Populating fine history values from {date} to {end_date}")
 
         while date < end_date:
-            print(".", end='')
             start = datetime.datetime.combine(date, datetime.time(0, 0)) - datetime.timedelta(minutes=5)
             stop = start + delta
 
@@ -117,6 +118,7 @@ class Site:
             count = {}
             inverters = await asyncio.gather(*(inverter.read_fine_history(int(start.timestamp()), int(stop.timestamp())) for inverter in self._inverters))
             for inverter in inverters:
+                print(".", end='')
                 last_non_null = None
                 for i in range(1, len(inverter)):
                     t = inverter[i]['t']
@@ -130,13 +132,15 @@ class Site:
                     count[t] = count.get(t, 0) + 1
                     last_non_null = v
 
-            site_total = []
-            for t, v in total.items():
-                if count[t] == len(inverters):
-                    site_total.append({'t': t, 'v': v})
-            site_total.insert(0, {'inverter': 'site'})
-            inverters.append(site_total)
-            self._influx.write_history(inverters, 'production/total')
+            # Site output if multiple inverters
+            if len(inverters) > 1:
+                site_total = []
+                for t, v in total.items():
+                    if count[t] == len(inverters):
+                        site_total.append({'t': t, 'v': v})
+                site_total.insert(0, {'inverter': 'site'})
+                inverters.append(site_total)
+            self._influx.write_history(inverters, 'production/daily')
             date += delta
         print()
 

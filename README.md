@@ -6,7 +6,7 @@ Python 3.7 or better is required, you can then install the Python requirements f
 ```
 git clone https://github.com/sillygoose/sbhistory
 cd sbhistory
-pip install -e .
+pip3 install -e .
 ```
 
 ## Use
@@ -16,6 +16,30 @@ Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your
 
 `python3 sbhistory.py`
 
+## Outputs
+Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version two outputs can be selected to be sent to InfluxDB:
+- daily_history
+
+    Daily history is the inverter(s) Wh meter recorded at approximately midnight each day:
+
+        _measurement    `production`
+        _inverter       `inverter name(s)`, 'site'
+        _field          `midnight`
+
+    This makes finding the production for a day, month, year, or any period the difference between the two selected records.
+
+- fine_history
+
+    Fine history is the inverter(s) Wh meter recorded at 5 minute periods throughout the day:
+
+        _measurement    `production`
+        _inverter       `inverter name(s)`, `site`
+        _field          `daily`
+
+    Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this accomplished.
+    
+    NOTE: It seems that only the current years daily production data is stored on an inverter.
+    
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by
 

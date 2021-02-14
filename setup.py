@@ -4,7 +4,7 @@
 from pathlib import Path
 from setuptools import setup
 
-VERSION = "0.5.6"
+VERSION = "0.5.7"
 URL = "https://github.com/sillygoose/sbhistory"
 
 setup(
@@ -18,13 +18,13 @@ setup(
     author="Rick Naro",
     author_email="sillygoose@me.com",
     license="MIT",
-    packages=["sbhistory"],
     setup_requires=[
         "flake8",
     ],
     install_requires=[
         "aiohttp",
         "asyncio",
+        "async_timeout",
         "jmespath",
         "influxdb-client",
         "paho-mqtt",
