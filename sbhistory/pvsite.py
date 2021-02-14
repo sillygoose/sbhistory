@@ -4,7 +4,7 @@ import asyncio
 import logging
 import dateutil
 import datetime
-import clearsky
+# import clearsky
 # from pprint import pprint
 
 from inverter import Inverter
@@ -140,41 +140,41 @@ class Site:
             date += delta
         print()
 
-    async def populate_irradiance(self):
-        site = clearsky.site_location(cfg.site.latitude, cfg.site.longitude, tz=cfg.site.tz)
-        siteinfo = LocationInfo(cfg.site.name, cfg.site.region, cfg.site.tz, cfg.site.latitude, cfg.site.longitude)
-        tzinfo = dateutil.tz.gettz(cfg.site.tz)
-
-        delta = datetime.timedelta(days=1)
-        date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
-        end_date = datetime.date.today() + delta
-        print(f"Populating irradiance values from {date} to {end_date}")
-
-        lp_points = []
-        while date < end_date:
-            print(".", end='')
-            astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
-            dawn = astral['dawn']
-            dusk = astral['dusk'] + datetime.timedelta(minutes=10)
-            start = datetime.datetime(dawn.year, dawn.month, dawn.day, dawn.hour, int(int(dawn.minute / 10) * 10))
-            stop = datetime.datetime(dusk.year, dusk.month, dusk.day, dusk.hour, int(int(dusk.minute / 10) * 10))
-
-            # Get irradiance data for today and convert to InfluxDB line protocol
-            irradiance = clearsky.get_irradiance(site=site, start=start.strftime("%Y-%m-%d %H:%M:00"), end=stop.strftime("%Y-%m-%d %H:%M:00"), tilt=cfg['solar_properties.tilt'], azimuth=cfg['solar_properties.azimuth'], freq='10min')
-            for point in irradiance:
-                t = point['t']
-                v = point['v'] * cfg.solar_properties.area * cfg.solar_properties.efficiency
-                lp = f'production,inverter=site irradiance={round(v, 1)} {t}'
-                lp_points.append(lp)
-            date += delta
-
-        self._influx.write_points(lp_points)
-        print()
+#    async def populate_irradiance(self):
+#        site = clearsky.site_location(cfg.site.latitude, cfg.site.longitude, tz=cfg.site.tz)
+#        siteinfo = LocationInfo(cfg.site.name, cfg.site.region, cfg.site.tz, cfg.site.latitude, cfg.site.longitude)
+#        tzinfo = dateutil.tz.gettz(cfg.site.tz)
+#
+#        delta = datetime.timedelta(days=1)
+#        date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
+#        end_date = datetime.date.today() + delta
+#        print(f"Populating irradiance values from {date} to {end_date}")
+#
+#        lp_points = []
+#        while date < end_date:
+#            print(".", end='')
+#            astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
+#            dawn = astral['dawn']
+#            dusk = astral['dusk'] + datetime.timedelta(minutes=10)
+#            start = datetime.datetime(dawn.year, dawn.month, dawn.day, dawn.hour, int(int(dawn.minute / 10) * 10))
+#            stop = datetime.datetime(dusk.year, dusk.month, dusk.day, dusk.hour, int(int(dusk.minute / 10) * 10))
+#
+#            # Get irradiance data for today and convert to InfluxDB line protocol
+#            irradiance = clearsky.get_irradiance(site=site, start=start.strftime("%Y-%m-%d %H:%M:00"), end=stop.strftime("%Y-%m-%d %H:%M:00"), tilt=cfg['solar_properties.tilt'], azimuth=cfg['solar_properties.azimuth'], freq='10min')
+#            for point in irradiance:
+#                t = point['t']
+#                v = point['v'] * cfg.solar_properties.area * cfg.solar_properties.efficiency
+#                lp = f'production,inverter=site irradiance={round(v, 1)} {t}'
+#                lp_points.append(lp)
+#            date += delta
+#
+#        self._influx.write_points(lp_points)
+#        print()
 
     async def run(self):
         if cfg.sbhistory.daily_history:
             await self.populate_daily_history()
         if cfg.sbhistory.fine_history:
             await self.populate_fine_history()
-        if cfg.sbhistory.irradiance_history:
-            await self.populate_irradiance()
+#        if cfg.sbhistory.irradiance_history:
+#            await self.populate_irradiance()

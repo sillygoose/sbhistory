@@ -4,7 +4,7 @@
 from pathlib import Path
 from setuptools import setup
 
-VERSION = "0.5.5"
+VERSION = "0.5.6"
 URL = "https://github.com/sillygoose/sbhistory"
 
 setup(
@@ -30,8 +30,6 @@ setup(
         "paho-mqtt",
         "astral",
         "python-dateutil",
-        "pvlib",
-        "tables",
         "python-configuration",
     ],
     zip_safe=True,

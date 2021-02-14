@@ -1,6 +1,14 @@
 # sbhistory
 Application to pull Sunny Boy inverter history and send to a InfluxDB 2.x or 1.8.x database
 
+## Installation
+Python 3.7 or better is required, you can then install the Python requirements for this application:
+```
+git clone https://github.com/sillygoose/sbhistory
+cd sbhistory
+pip install -e .
+```
+
 ## Use
 Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for data.
 
@@ -16,3 +24,16 @@ If you happen to make errors and get locked out of your inverters (confirm by be
 - wait 2 minutes
 - restore DC power via each rotary switch
 - restore grid power via breakers
+
+## Thanks
+Thanks for the following packages used to build this software:
+- PYSMA library for WebConnect
+    - http://www.github.com/kellerza/pysma
+- YAML configuration file support
+    - https://python-configuration.readthedocs.io
+- Astral solar calculator
+    - https://astral.readthedocs.io
+- Tricks for managing startup and shutdown
+    - https://github.com/wbenny/python-graceful-shutdown
+
+

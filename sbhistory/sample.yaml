@@ -9,7 +9,6 @@ sbhistory:
   start_day: 1
   
   # Select the outputs you want to populate in the database
-  irradiance_history: True
   fine_history: True
   daily_history: True
 
