@@ -20,6 +20,9 @@ setup(
     license="MIT",
     packages=["sbhist"],
     #packages=find_packages(include=['sbhist', '.*'])
+    setup_requires=[
+        "flake8",
+    ]
     install_requires=[
         "aiohttp",
         "asyncio",
