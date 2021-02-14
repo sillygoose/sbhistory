@@ -1,10 +1,10 @@
 # sbhistory
-Application to pull Sunny Boy inverter history and send to a InfluxDB database
+Application to pull Sunny Boy inverter history and send to a InfluxDB 2.x or 1.8.x database
 
 ## Use
 Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for data.
 
-Copy the file `sbhistory.edit` to `sbhistory.yaml` and edit for your local site and inverters.  Run the application from the command line using Python 3.7 or later:
+Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your local site and inverters.  Run the application from the command line using Python 3.7 or later:
 
 `python3 sbhistory.py`
 

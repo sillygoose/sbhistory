@@ -21,7 +21,7 @@ log:
 
 # Site location details for solar time calculations (elevation is in meters)
 site:
-  name: 'MY Site'
+  name: 'My Site'
   region: 'My Region'
   tz: 'America/New_York'
   latitude: 41.0
