@@ -30,10 +30,11 @@ def get_version():
     version = "unknown"
 
     # Save current directory and switch to the git project root directory
-    current = os.getcwd()
-    p = Path(dirname(__file__))
-    os.chdir(p)
-    if isdir(join(p.parents[0], ".git")):
+    current_dir = os.getcwd()
+    app_path = Path(dirname(__file__))
+    os.chdir(app_path)
+    print(app_path.parent)
+    if isdir(join(app_path.parent, ".git")):
         # Get the version using "git describe".
         cmd = "git describe --tags --match [0-9]*".split()
         try:
@@ -62,7 +63,7 @@ def get_version():
             version += ".dev"
 
     # Restore the original directory
-    os.chdir(current)
+    os.chdir(current_dir)
     return version
 
 
