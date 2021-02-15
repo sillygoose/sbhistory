@@ -30,16 +30,16 @@ class Site:
         yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
         cfg = self._cfg = config_from_yaml(data=yaml_file, read_from_file=True)
 
-        self._influx = InfluxDB(cfg.influxdb2.enable)
+        self._influx = InfluxDB(cfg.sbhistory.influxdb2.enable)
         self._inverters = []
-        for inverter in cfg.inverters:
+        for inverter in cfg.sbhistory.inverters:
             inv = inverter.get('inverter', None)
             self._inverters.append(Inverter(inv['name'], inv['url'], inv['user'], inv['password'], session))
 
     async def start(self):
         """Initialize the Site object."""
         cfg = self._cfg
-        if not self._influx.start(url=cfg.influxdb2.url, bucket=cfg.influxdb2.bucket, org=cfg.influxdb2.org, token=cfg.influxdb2.token):
+        if not self._influx.start(url=cfg.sbhistory.influxdb2.url, bucket=cfg.sbhistory.influxdb2.bucket, org=cfg.sbhistory.influxdb2.org, token=cfg.sbhistory.influxdb2.token):
             return False
         results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
         return False not in results
@@ -53,7 +53,7 @@ class Site:
     async def populate_daily_history(self):
         cfg = self._cfg
         now = datetime.datetime.now()
-        start = datetime.datetime(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
+        start = datetime.datetime(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
         stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
         print(f"Populating daily history values from {start.date()} to {stop.date()}")
 
@@ -61,7 +61,7 @@ class Site:
         for inverter in inverters:
             t = inverter[1]['t']
             dt = datetime.datetime.fromtimestamp(t)
-            date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
+            date = datetime.date(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
             end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
             delta = datetime.timedelta(days=1)
             while date < end_date:
@@ -112,7 +112,7 @@ class Site:
     async def populate_fine_history(self):
         cfg = self._cfg
         delta = datetime.timedelta(days=1)
-        date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
+        date = datetime.date(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
         end_date = datetime.date.today() + delta
         print(f"Populating fine history values from {date} to {end_date}")
 
@@ -151,12 +151,12 @@ class Site:
         print()
 
 #    async def populate_irradiance(self):
-#        site = clearsky.site_location(cfg.site.latitude, cfg.site.longitude, tz=cfg.site.tz)
-#        siteinfo = LocationInfo(cfg.site.name, cfg.site.region, cfg.site.tz, cfg.site.latitude, cfg.site.longitude)
-#        tzinfo = dateutil.tz.gettz(cfg.site.tz)
+#        site = clearsky.site_location(cfg.sbhistory.site.latitude, cfg.sbhistory.site.longitude, tz=cfg.sbhistory.site.tz)
+#        siteinfo = LocationInfo(cfg.sbhistory.site.name, cfg.sbhistory.site.region, cfg.sbhistory.site.tz, cfg.sbhistory.site.latitude, cfg.sbhistory.site.longitude)
+#        tzinfo = dateutil.tz.gettz(cfg.sbhistory.site.tz)
 #
 #        delta = datetime.timedelta(days=1)
-#        date = datetime.date(year=cfg.sbhistory.start_year, month=cfg.sbhistory.start_month, day=cfg.sbhistory.start_day)
+#        date = datetime.date(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
 #        end_date = datetime.date.today() + delta
 #        print(f"Populating irradiance values from {date} to {end_date}")
 #
@@ -173,7 +173,7 @@ class Site:
 #            irradiance = clearsky.get_irradiance(site=site, start=start.strftime("%Y-%m-%d %H:%M:00"), end=stop.strftime("%Y-%m-%d %H:%M:00"), tilt=cfg['solar_properties.tilt'], azimuth=cfg['solar_properties.azimuth'], freq='10min')
 #            for point in irradiance:
 #                t = point['t']
-#                v = point['v'] * cfg.solar_properties.area * cfg.solar_properties.efficiency
+#                v = point['v'] * cfg.sbhistory.solar_properties.area * cfg.sbhistory.solar_properties.efficiency
 #                lp = f'production,inverter=site irradiance={round(v, 1)} {t}'
 #                lp_points.append(lp)
 #            date += delta
@@ -183,9 +183,9 @@ class Site:
 
     async def run(self):
         cfg = self._cfg
-        if cfg.sbhistory.daily_history:
+        if cfg.sbhistory.outputs.daily_history:
             await self.populate_daily_history()
-        if cfg.sbhistory.fine_history:
+        if cfg.sbhistory.outputs.fine_history:
             await self.populate_fine_history()
-#        if cfg.sbhistory.irradiance_history:
+#        if cfg.sbhistory.outputs.irradiance_history:
 #            await self.populate_irradiance()

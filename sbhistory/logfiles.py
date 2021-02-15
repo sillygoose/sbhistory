@@ -30,7 +30,7 @@ def create_application_log(app_logger):
 
     now = datetime.now()
     filename = os.path.expanduser(
-        cfg.log.file + "_" + now.strftime("%Y-%m-%d") + ".log"
+        cfg.sbhistory.log.file + "_" + now.strftime("%Y-%m-%d") + ".log"
     )
 
     # Create the directory if needed
@@ -39,21 +39,21 @@ def create_application_log(app_logger):
         os.mkdir(filename_parts[0])
     filename = os.path.abspath(filename)
     logging_level = logging.ERROR
-    if cfg.log.level == 'Info':
+    if cfg.sbhistory.log.level == 'Info':
         logging_level = logging.INFO
-    elif cfg.log.level == 'Warn':
+    elif cfg.sbhistory.log.level == 'Warn':
         logging_level = logging.WARN
     logging.basicConfig(
         filename=filename,
         filemode="w+",
-        format=cfg.log.format,
+        format=cfg.sbhistory.log.format,
         level=logging_level,
     )
 
     # Add some console output for anyone watching
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(logging.Formatter(cfg.log.format))
+    console_handler.setFormatter(logging.Formatter(cfg.sbhistory.log.format))
     app_logger.addHandler(console_handler)
     app_logger.setLevel(logging.INFO)
 
