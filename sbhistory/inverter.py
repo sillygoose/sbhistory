@@ -27,6 +27,7 @@ class Inverter:
         if self._sma.sma_sid is None:
             logger.info("%s - no session ID", self._name)
             return False
+        print(f"Connected to SMA inverter {self._name} at {self._url}")
         return True
 
     async def close(self):

@@ -4,9 +4,9 @@ Application to pull Sunny Boy inverter history and send to a InfluxDB 2.x or 1.8
 ## Installation
 Python 3.7 or better is required, you can then install the Python requirements for this application:
 ```
-git clone https://github.com/sillygoose/sbhistory
-cd sbhistory
-pip3 install -e .
+    git clone https://github.com/sillygoose/sbhistory
+    cd sbhistory
+    pip3 install -e .
 ```
 
 ## Use
@@ -14,7 +14,9 @@ Make sure your InfluxDB database has an infinite retention policy, or at least l
 
 Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your local site and inverters.  Run the application from the command line using Python 3.7 or later:
 
-`python3 sbhistory.py`
+```
+    python3 sbhistory.py
+```
 
 ## Outputs
 Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version two outputs can be selected to be sent to InfluxDB:
@@ -37,9 +39,9 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
         _field          `daily`
 
     Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
-    
+
     NOTE: It seems that only the current years daily production data is stored on an inverter.
-    
+
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by
 
