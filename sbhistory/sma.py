@@ -35,8 +35,8 @@ class SMA:
         if group not in USERS:
             raise KeyError("Invalid user type: {}".format(group))
         if len(password) > 12:
-            logger.warning('Password should not exceed 12 characters')
-        self._new_session_data = {"right": USERS[group], "pass": password}
+            logger.warning("Password should not exceed 12 characters")
+        self._new_session_data = {'right': USERS[group], 'pass': password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
             self._url = "http://" + self._url
@@ -64,35 +64,30 @@ class SMA:
         if self.sma_sid is None:
             await self.new_session()
             if self.sma_sid is None:
+                logger.error(f"Unable to create new session with inverter {self._url}")
                 return None
         body = await self._fetch_json(url, payload=payload)
 
         # On the first error we close the session which will re-login
-        err = body.get("err")
+        err = body.get('err')
         if err is not None:
-            logger.warning(
-                "%s: error detected, closing session to force another login attempt, got: %s",
-                self._url,
-                body,
+            logger.error(
+                f"{self._url}: error detected, closing session to force another login attempt, got: {body}",
             )
             await self.close_session()
             return None
 
-        if not isinstance(body, dict) or "result" not in body:
-            logger.warning("No 'result' in reply from SMA, got: %s", body)
+        if not isinstance(body, dict) or 'result' not in body:
+            logger.error(f"No 'result' in reply from SMA, got: {body}")
             return None
 
         if self.sma_uid is None:
             # Get the unique ID
-            self.sma_uid = next(iter(body["result"].keys()), None)
+            self.sma_uid = next(iter(body['result'].keys()), None)
 
-        result_body = body["result"].pop(self.sma_uid, None)
-        if body != {"result": {}}:
-            logger.warning(
-                "Unexpected body %s, extracted %s",
-                json.dumps(body),
-                json.dumps(result_body),
-            )
+        result_body = body['result'].pop(self.sma_uid, None)
+        if body != {'result': {}}:
+            logger.error(f"Unexpected body {json.dumps(body)}, extracted {json.dumps(result_body)}")
 
         return result_body
 
@@ -103,7 +98,7 @@ class SMA:
         if self.sma_sid:
             return True
 
-        err = body.pop("err", None)
+        err = body.pop('err', None)
         msg = "Could not start session, %s, got {}".format(body)
 
         if err:
@@ -125,25 +120,27 @@ class SMA:
             self.sma_sid = None
 
     async def read_values(self, keys):
-        """Read a set of keys."""
+        """Read a list of one or more keys."""
         payload = {"destDev": [], "keys": keys}
         result_body = await self._read_body(URL_VALUES, payload)
         return result_body
 
     async def read_instantaneous(self):
-        """xxx."""
+        """One command to read the sensors in the Instantaneous inverter view."""
         payload = {"destDev": []}
         result_body = await self._read_body(URL_ONLINE, payload)
         return result_body
 
     async def read_history(self, start, end):
-        """{"destDev":[],"key":28704,"tStart":1601521200,"tEnd":1604217600}."""
+        """Read the history for the specified period."""
+        # {"destDev":[],"key":28704,"tStart":1601521200,"tEnd":1604217600}.
         payload = {"destDev": [], "key": 28704, "tStart": start, "tEnd": end}
         result_body = await self._read_body(URL_LOGGER, payload)
         return result_body
 
     async def read_fine_history(self, start, end):
-        """{"destDev":[],"key":28672,"tStart":1601521200,"tEnd":1604217600}."""
+        """Read the fine history for the specified period."""
+        # {"destDev":[],"key":28672,"tStart":1601521200,"tEnd":1604217600}.
         payload = {"destDev": [], "key": 28672, "tStart": start, "tEnd": end}
         result_body = await self._read_body(URL_LOGGER, payload)
         return result_body

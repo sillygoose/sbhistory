@@ -15,6 +15,7 @@ Make sure your InfluxDB database has an infinite retention policy, or at least l
 Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your local site and inverters.  Run the application from the command line using Python 3.7 or later:
 
 ```
+    cd sbhistory
     python3 sbhistory.py
 ```
 

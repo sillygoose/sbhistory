@@ -61,7 +61,7 @@ class Site:
             end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
             delta = datetime.timedelta(days=1)
             while date < end_date:
-                print(".", end='')
+                print(".", end='', flush=True)
                 newtime = datetime.datetime.combine(date, datetime.time(0, 0))
                 t = int(newtime.timestamp())
                 inverter.append({'t': t, 'v': 0})
@@ -81,7 +81,7 @@ class Site:
         for inverter in inverters:
             last_non_null = None
             for i in range(1, len(inverter)):
-                print(".", end='')
+                print(".", end='', flush=True)
                 t = inverter[i]['t']
                 v = inverter[i]['v']
                 if v is None:
@@ -121,7 +121,7 @@ class Site:
             count = {}
             inverters = await asyncio.gather(*(inverter.read_fine_history(int(start.timestamp()), int(stop.timestamp())) for inverter in self._inverters))
             for inverter in inverters:
-                print(".", end='')
+                print(".", end='', flush=True)
                 last_non_null = None
                 for i in range(1, len(inverter)):
                     t = inverter[i]['t']
@@ -160,7 +160,7 @@ class Site:
 #
 #        lp_points = []
 #        while date < end_date:
-#            print(".", end='')
+#            print(".", end='', flush=True)
 #            astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
 #            dawn = astral['dawn']
 #            dusk = astral['dusk'] + datetime.timedelta(minutes=10)
