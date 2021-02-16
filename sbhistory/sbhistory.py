@@ -4,6 +4,7 @@
 
 import logging
 import sys
+import os
 
 import asyncio
 import aiohttp
@@ -12,6 +13,7 @@ from delayedints import DelayedKeyboardInterrupt
 from pvsite import Site
 import version
 import logfiles
+from config import config_from_yaml
 
 
 logger = logging.getLogger('sbhistory')
@@ -28,6 +30,9 @@ class Multisma2:
         self._loop = asyncio.new_event_loop()
         self._session = None
         self._site = None
+        yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+        self._config = config_from_yaml(data=yaml_file, read_from_file=True)
+
 
     def run(self):
         try:
@@ -36,7 +41,7 @@ class Multisma2:
                 with DelayedKeyboardInterrupt():
                     self._start()
             except KeyboardInterrupt:
-                logger.info("Received KeyboardInterrupt during startup")
+                logger.critical("Received KeyboardInterrupt during startup")
                 raise
 
             # multisma2 is running, wait for completion.
@@ -49,15 +54,15 @@ class Multisma2:
                 with DelayedKeyboardInterrupt():
                     self._stop()
             except KeyboardInterrupt:
-                logger.info("Received KeyboardInterrupt during shutdown")
+                logger.critical("Received KeyboardInterrupt during shutdown")
 
     async def _astart(self):
         try:
-            logfiles.create_application_log(logger)
+            logfiles.create_application_log(logger, self._config)
             logger.info(f"multisma2 inverter production history utility {version.get_version()}")
 
             self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-            self._site = Site(self._session)
+            self._site = Site(self._session, self._config)
             result = await self._site.start()
             if not result:
                 raise Multisma2.FailedInitialization

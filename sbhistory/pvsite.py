@@ -14,7 +14,6 @@ from influx import InfluxDB
 from astral.sun import sun
 from astral import LocationInfo
 
-from config import config_from_yaml
 
 logger = logging.getLogger('sbhistory')
 
@@ -25,21 +24,19 @@ def diff_month(d1, d2):
 
 class Site:
     """Class to describe a PV site with one or more inverters."""
-    def __init__(self, session):
+    def __init__(self, session, config):
         """Create a new Site object."""
-        yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
-        cfg = self._cfg = config_from_yaml(data=yaml_file, read_from_file=True)
-
-        self._influx = InfluxDB(cfg.sbhistory.influxdb2.enable)
+        self._config = config
+        self._influx = InfluxDB(config.multisma2.influxdb2.enable)
         self._inverters = []
-        for inverter in cfg.sbhistory.inverters:
+        for inverter in config.multisma2.inverters:
             inv = inverter.get('inverter', None)
             self._inverters.append(Inverter(inv['name'], inv['url'], inv['user'], inv['password'], session))
 
     async def start(self):
         """Initialize the Site object."""
-        cfg = self._cfg
-        if not self._influx.start(url=cfg.sbhistory.influxdb2.url, bucket=cfg.sbhistory.influxdb2.bucket, org=cfg.sbhistory.influxdb2.org, token=cfg.sbhistory.influxdb2.token):
+        config = self._config
+        if not self._influx.start(url=config.multisma2.influxdb2.url, bucket=config.multisma2.influxdb2.bucket, org=config.multisma2.influxdb2.org, token=config.multisma2.influxdb2.token):
             return False
         results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
         return False not in results
@@ -51,7 +48,7 @@ class Site:
 
     # daily totals, day increments
     async def populate_daily_history(self):
-        cfg = self._cfg
+        cfg = self._config
         now = datetime.datetime.now()
         start = datetime.datetime(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
         stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
@@ -105,14 +102,15 @@ class Site:
                     site_total.append({'t': t, 'v': v})
             site_total.insert(0, {'inverter': 'site'})
             inverters.append(site_total)
-        self._influx.write_history(inverters, 'production/midnight')
+
+        self._influx.write_history(inverters, 'production/total_wh')
         print()
 
     # fine production, 5 minute increments
     async def populate_fine_history(self):
-        cfg = self._cfg
+        config = self._config
         delta = datetime.timedelta(days=1)
-        date = datetime.date(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
+        date = datetime.date(year=config.sbhistory.start.year, month=config.sbhistory.start.month, day=config.sbhistory.start.day)
         end_date = datetime.date.today() + delta
         print(f"Populating fine history values from {date} to {end_date}")
 
@@ -146,7 +144,8 @@ class Site:
                         site_total.append({'t': t, 'v': v})
                 site_total.insert(0, {'inverter': 'site'})
                 inverters.append(site_total)
-            self._influx.write_history(inverters, 'production/daily')
+
+            self._influx.write_history(inverters, 'production/total_wh')
             date += delta
         print()
 
@@ -182,10 +181,10 @@ class Site:
 #        print()
 
     async def run(self):
-        cfg = self._cfg
-        if cfg.sbhistory.outputs.daily_history:
+        config = self._config
+        if config.sbhistory.outputs.daily_history:
             await self.populate_daily_history()
-        if cfg.sbhistory.outputs.fine_history:
+        if config.sbhistory.outputs.fine_history:
             await self.populate_fine_history()
-#        if cfg.sbhistory.outputs.irradiance_history:
+#        if config.sbhistory.outputs.irradiance_history:
 #            await self.populate_irradiance()

@@ -4,6 +4,7 @@
 # https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/
 
 import logging
+from pprint import pprint
 
 from influxdb_client import InfluxDBClient, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -12,18 +13,20 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 logger = logging.getLogger('sbhistory')
 
 LP_LOOKUP = {
-    'ac_measurements/power': {'measurement': 'ac_measurements', 'field': 'power'},
-    'ac_measurements/voltage': {'measurement': 'ac_measurements', 'field': 'voltage'},
-    'ac_measurements/current': {'measurement': 'ac_measurements', 'field': 'current'},
-    'ac_measurements/efficiency': {'measurement': 'ac_measurements', 'field': 'efficiency'},
-    'dc_measurements/power': {'measurement': 'dc_measurements', 'field': 'power'},
-    'status/reason_for_derating': {'measurement': 'status', 'field': 'derating'},
-    'status/general_operating_status': {'measurement': 'status', 'field': 'operating_status'},
-    'status/grid_relay': {'measurement': 'status', 'field': 'grid_relay'},
-    'status/condition': {'measurement': 'status', 'field': 'condition'},
-    'production/daily': {'measurement': 'production', 'field': 'daily'},
-    'production/midnight': {'measurement': 'production', 'field': 'midnight'},
+    'ac_measurements/power': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'power'},
+    'ac_measurements/voltage': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'voltage'},
+    'ac_measurements/current': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'current'},
+    'ac_measurements/efficiency': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'efficiency'},
+    'dc_measurements/power': {'measurement': 'dc_measurements', 'tag': '_inverter', 'field': 'power'},
+    'status/reason_for_derating': {'measurement': 'status', 'tag': '_inverter', 'field': 'derating'},
+    'status/general_operating_status': {'measurement': 'status', 'tag': '_inverter', 'field': 'operating_status'},
+    'status/grid_relay': {'measurement': 'status', 'tag': '_inverter', 'field': 'grid_relay'},
+    'status/condition': {'measurement': 'status', 'tag': '_inverter', 'field': 'condition'},
+    'production/total_wh': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
+    'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'midnight'}, ###delete?
+    'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
 }
+
 
 
 class InfluxDB():
@@ -74,6 +77,7 @@ class InfluxDB():
             return result
 
         measurement = lookup.get('measurement')
+        tag = lookup.get('tag')
         field = lookup.get('field')
         lps = []
         for inverter in site:
@@ -86,7 +90,7 @@ class InfluxDB():
                     # logger.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
                     continue
                 elif isinstance(v, int):
-                    lp = f'{measurement},_inverter={name} {field}={v}i {t}'
+                    lp = f'{measurement},{tag}={name} {field}={v}i {t}'
                     lps.append(lp)
                 else:
                     logger.error(f"write_history(): unanticipated type '{type(v)}' in measurement '{measurement}/{field}'")
