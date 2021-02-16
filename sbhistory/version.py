@@ -16,7 +16,7 @@ and use the results of get_version() as your package version:
 __all__ = "get_version"
 
 from os.path import dirname, isdir, join
-from pathlib import Path 
+from pathlib import Path
 import os
 import re
 import subprocess

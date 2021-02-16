@@ -4,7 +4,6 @@
 # https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/
 
 import logging
-from pprint import pprint
 
 from influxdb_client import InfluxDBClient, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -23,10 +22,8 @@ LP_LOOKUP = {
     'status/grid_relay': {'measurement': 'status', 'tag': '_inverter', 'field': 'grid_relay'},
     'status/condition': {'measurement': 'status', 'tag': '_inverter', 'field': 'condition'},
     'production/total_wh': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
-    'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'midnight'}, ###delete?
     'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
 }
-
 
 
 class InfluxDB():

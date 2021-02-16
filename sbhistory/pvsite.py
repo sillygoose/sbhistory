@@ -1,9 +1,8 @@
 """Code to interface with the SMA inverters and return the results."""
 
-import os
 import asyncio
 import logging
-import dateutil
+# import dateutil
 import datetime
 # import clearsky
 # from pprint import pprint
@@ -11,8 +10,8 @@ import datetime
 from inverter import Inverter
 from influx import InfluxDB
 
-from astral.sun import sun
-from astral import LocationInfo
+# from astral.sun import sun
+# from astral import LocationInfo
 
 
 logger = logging.getLogger('sbhistory')

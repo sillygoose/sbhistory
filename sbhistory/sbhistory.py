@@ -33,10 +33,8 @@ class Multisma2:
         yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
         self._config = config_from_yaml(data=yaml_file, read_from_file=True)
 
-
     def run(self):
         try:
-            # Shield _start() from termination.
             try:
                 with DelayedKeyboardInterrupt():
                     self._start()
@@ -44,7 +42,6 @@ class Multisma2:
                 logger.critical("Received KeyboardInterrupt during startup")
                 raise
 
-            # multisma2 is running, wait for completion.
             self._wait()
             raise Multisma2.NormalCompletion
 
@@ -57,16 +54,13 @@ class Multisma2:
                 logger.critical("Received KeyboardInterrupt during shutdown")
 
     async def _astart(self):
-        try:
-            logfiles.create_application_log(logger, self._config)
-            logger.info(f"multisma2 inverter production history utility {version.get_version()}")
+        logfiles.create_application_log(logger, self._config)
+        logger.info(f"multisma2 inverter production history utility {version.get_version()}")
 
-            self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-            self._site = Site(self._session, self._config)
-            result = await self._site.start()
-            if not result:
-                raise Multisma2.FailedInitialization
-        except:
+        self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+        self._site = Site(self._session, self._config)
+        result = await self._site.start()
+        if not result:
             raise Multisma2.FailedInitialization
 
     async def _astop(self):
