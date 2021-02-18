@@ -23,7 +23,7 @@ Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your
 Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version two outputs can be selected to be sent to InfluxDB:
 - daily_history
 
-    Daily history is the inverter(s) Wh meter recorded at approximately midnight each day:
+    Daily history is the inverter(s) total Wh meter recorded at midnight (local time) each day:
 
         _measurement    `production`
         _inverter       `inverter name(s)`, 'site'
@@ -33,11 +33,11 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
 - fine_history
 
-    Fine history is the inverter(s) Wh meter recorded at 5 minute periods throughout the day:
+    Fine history is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
 
         _measurement    `production`
         _inverter       `inverter name(s)`, `site`
-        _field          `daily`
+        _field          `total_wh`
 
     Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
 

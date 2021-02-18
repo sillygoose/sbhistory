@@ -102,7 +102,7 @@ class Site:
             site_total.insert(0, {'inverter': 'site'})
             inverters.append(site_total)
 
-        self._influx.write_history(inverters, 'production/total_wh')
+        self._influx.write_history(inverters, 'production/midnight')
         print()
 
     # fine production, 5 minute increments

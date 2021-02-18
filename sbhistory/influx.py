@@ -22,9 +22,9 @@ LP_LOOKUP = {
     'status/grid_relay': {'measurement': 'status', 'tag': '_inverter', 'field': 'grid_relay'},
     'status/condition': {'measurement': 'status', 'tag': '_inverter', 'field': 'condition'},
     'production/total_wh': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
+    'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'midnight'},
     'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
 }
-
 
 class InfluxDB():
     def __init__(self, enabled):
