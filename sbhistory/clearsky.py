@@ -1,48 +1,54 @@
-"""Module to estimate the clearsky irradiance for a site."""
+"""Module to estimate the clearsky irradiance for a specific site."""
 
-import pandas as pd
-from pvlib import location, irradiance
-
+#import os
 import logging
+import datetime
+from dateutil import tz
+import math
+
+from pprint import pprint
+
+from pysolar.solar import get_altitude, get_azimuth
+from pysolar.radiation import get_radiation_direct
+
+from astral import LocationInfo
+#from astral.sun import sun
+
+#from config import config_from_yaml
 
 
 logger = logging.getLogger('sbhistory')
 
 
-def site_location(latitude, longitude, tz):
-    site = location.Location(latitude, longitude, tz)
-    return site
-
-
-def get_irradiance(site, start, end, tilt, azimuth, freq):
+def global_irradiance(site, dawn, dusk, n, sigma, phi_c, rho):
     """Calculate the clear-sky POA (plane of array) irradiance."""
-    # Creates one day's worth of intervals
-    times = pd.date_range(start=start, end=end, freq=freq, tz=site.tz)
+    irradiance = []
+    tzinfo = tz.gettz(site.tz)
 
-    # Generate clearsky data using the Ineichen model, which is the default
-    # The get_clearsky method returns a dataframe with values for GHI, DNI, and DHI
-    clearsky = site.get_clearsky(times)
+    dusk += datetime.timedelta(minutes=10)
 
-    # Get solar azimuth and zenith to pass to the transposition function
-    solar_position = site.get_solarposition(times=times)
+    C = 0.095 + 0.04 * math.sin(math.radians((n - 100) / 365))
+    sin_sigma = math.sin(sigma)
+    cos_sigma = math.cos(sigma)
 
-    # Use the get_total_irradiance function to transpose the GHI to POA
-    POA_irradiance = irradiance.get_total_irradiance(
-        surface_tilt=tilt,
-        surface_azimuth=azimuth,
-        dni=clearsky['dni'],
-        ghi=clearsky['ghi'],
-        dhi=clearsky['dhi'],
-        solar_zenith=solar_position['apparent_zenith'],
-        solar_azimuth=solar_position['azimuth'])
+    t = datetime.datetime(year=dawn.year, month=dawn.month, day=dawn.day, hour=dawn.hour, minute=int(int(dawn.minute/10)*10), tzinfo=tzinfo)
+    stop = datetime.datetime(year=dusk.year, month=dusk.month, day=dusk.day, hour=dusk.hour, minute=int(int(dusk.minute/10)*10), tzinfo=tzinfo)
+    while t < stop:
+        altitude = get_altitude(latitude_deg=site.latitude, longitude_deg=site.longitude, when=t)
+        beta = math.radians(altitude)
+        azimuth = math.radians(get_azimuth(site.latitude, site.longitude, t))
+        phi_s = math.radians(azimuth)
 
-    # Return a DataFrame with only POA result and convert to a dictionary of time and values
-    today_irradiance = pd.DataFrame({'POA': POA_irradiance['poa_global']})
-    points = []
-    for time, row in today_irradiance.iterrows():
-        dt = pd.to_datetime(time)
-        v = row['POA']
-        points.append({'t': int(dt.timestamp()), 'v': v})
+        cos_theta = math.cos(beta) * math.cos(phi_s - phi_c) * sin_sigma + math.sin(beta) * cos_sigma
+        ib = get_radiation_direct(when=t, altitude_deg=altitude)
+        ibc = ib * cos_theta
 
-    # Return value: [{'t': timestamp, 'v': irradiance_value}]
-    return points
+        idc = C * ib * (1 + cos_sigma) / 2
+
+        irc = rho * ib * (math.sin(beta) + C) * ((1 - cos_sigma) / 2)
+
+        igc = ibc + idc + irc
+        irradiance.append({'t': int(t.timestamp()), 'v': igc})
+        t += datetime.timedelta(minutes=10)
+
+    return irradiance

@@ -1,17 +1,18 @@
-"""Code to interface with the SMA inverters and return the results."""
+"""Code to interface with the SMA inverters and return state or history."""
 
 import asyncio
+import math
 import logging
-# import dateutil
+import dateutil
 import datetime
-# import clearsky
-# from pprint import pprint
+import clearsky
+from pprint import pprint
 
 from inverter import Inverter
 from influx import InfluxDB
 
-# from astral.sun import sun
-# from astral import LocationInfo
+from astral.sun import sun
+from astral import LocationInfo
 
 
 logger = logging.getLogger('sbhistory')
@@ -148,36 +149,46 @@ class Site:
             date += delta
         print()
 
-#    async def populate_irradiance(self):
-#        site = clearsky.site_location(cfg.sbhistory.site.latitude, cfg.sbhistory.site.longitude, tz=cfg.sbhistory.site.tz)
-#        siteinfo = LocationInfo(cfg.sbhistory.site.name, cfg.sbhistory.site.region, cfg.sbhistory.site.tz, cfg.sbhistory.site.latitude, cfg.sbhistory.site.longitude)
-#        tzinfo = dateutil.tz.gettz(cfg.sbhistory.site.tz)
-#
-#        delta = datetime.timedelta(days=1)
-#        date = datetime.date(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
-#        end_date = datetime.date.today() + delta
-#        print(f"Populating irradiance values from {date} to {end_date}")
-#
-#        lp_points = []
-#        while date < end_date:
-#            print(".", end='', flush=True)
-#            astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
-#            dawn = astral['dawn']
-#            dusk = astral['dusk'] + datetime.timedelta(minutes=10)
-#            start = datetime.datetime(dawn.year, dawn.month, dawn.day, dawn.hour, int(int(dawn.minute / 10) * 10))
-#            stop = datetime.datetime(dusk.year, dusk.month, dusk.day, dusk.hour, int(int(dusk.minute / 10) * 10))
-#
-#            # Get irradiance data for today and convert to InfluxDB line protocol
-#            irradiance = clearsky.get_irradiance(site=site, start=start.strftime("%Y-%m-%d %H:%M:00"), end=stop.strftime("%Y-%m-%d %H:%M:00"), tilt=cfg['solar_properties.tilt'], azimuth=cfg['solar_properties.azimuth'], freq='10min')
-#            for point in irradiance:
-#                t = point['t']
-#                v = point['v'] * cfg.sbhistory.solar_properties.area * cfg.sbhistory.solar_properties.efficiency
-#                lp = f'production,inverter=site irradiance={round(v, 1)} {t}'
-#                lp_points.append(lp)
-#            date += delta
-#
-#        self._influx.write_points(lp_points)
-#        print()
+    async def populate_irradiance(self, config):
+        try:
+            start = config.sbhistory.start
+            site = config.multisma2.site
+            solar_properties = config.multisma2.solar_properties
+
+            tzinfo = dateutil.tz.gettz(site.tz)
+            siteinfo = LocationInfo(name=site.name, region=site.region, timezone=site.tz, latitude=site.latitude, longitude=site.longitude)
+
+            delta = datetime.timedelta(days=1)
+            date = datetime.datetime(year=start.year, month=start.month, day=start.day)
+            end_date = datetime.datetime.today() + delta
+            print(f"Populating irradiance values from {date} to {end_date}")
+
+            sigma = math.radians(solar_properties.tilt)
+            orientation = 180 - solar_properties.azimuth
+            phi_c = math.radians(orientation)
+            rho = solar_properties.get('rho', 0.0)
+
+            lp_points = []
+            while date < end_date:
+                print(".", end='', flush=True)
+                astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
+                dawn = astral['dawn']
+                dusk = astral['dusk']
+                doy = dawn.timetuple().tm_yday
+
+                # Get irradiance data for today and convert to InfluxDB line protocol
+                irradiance = clearsky.global_irradiance(site=site, dawn=dawn, dusk=dusk, n=doy, sigma=sigma, phi_c=phi_c, rho=rho)
+                for point in irradiance:
+                    t = point['t']
+                    v = point['v'] * solar_properties.area * solar_properties.efficiency
+                    lp = f'production,_inverter=site irradiance={round(v, 1)} {t}'
+                    lp_points.append(lp)
+                date += delta
+
+            self._influx.write_points(lp_points)
+            print()
+        except Exception as e:
+            logger.error(f"An exception occurred in populate_irradiance(): {e}")
 
     async def run(self):
         config = self._config
@@ -185,5 +196,5 @@ class Site:
             await self.populate_daily_history()
         if config.sbhistory.outputs.fine_history:
             await self.populate_fine_history()
-#        if config.sbhistory.outputs.irradiance_history:
-#            await self.populate_irradiance()
+        if config.sbhistory.outputs.irradiance_history:
+            await self.populate_irradiance(config)
