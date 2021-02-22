@@ -29,9 +29,9 @@ setup(
         "influxdb-client",
         "paho-mqtt",
         "astral",
+        "pysolar",
         "python-dateutil",
         "python-configuration",
-        "pysolar",
     ],
     zip_safe=True,
 )
