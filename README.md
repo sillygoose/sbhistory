@@ -20,7 +20,7 @@ Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your
 ```
 
 ## Outputs
-Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version two outputs can be selected to be sent to InfluxDB:
+Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version the following outputs can be selected to be sent to InfluxDB:
 - daily_history
 
     Daily history is the inverter(s) total Wh meter recorded at midnight (local time) each day:
@@ -43,6 +43,10 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     NOTE: It seems that only the current years daily production data is stored on an inverter.
 
+- irradiance_history
+
+    Irradiance history is an estimate of the solar potential for a site over the period of day.
+
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by
 
@@ -60,6 +64,8 @@ Thanks for the following packages used to build this software:
     - https://python-configuration.readthedocs.io
 - Astral solar calculator
     - https://astral.readthedocs.io
+- Solar irradiance on a tilted collector
+    - Chapter 7 of 'Renewable and Efficient Electric Power Systems' by Masters
 - Tricks for managing startup and shutdown
     - https://github.com/wbenny/python-graceful-shutdown
 
