@@ -31,6 +31,7 @@ setup(
         "astral",
         "python-dateutil",
         "python-configuration",
+        "pysolar",
     ],
     zip_safe=True,
 )
