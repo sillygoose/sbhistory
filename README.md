@@ -41,7 +41,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
 
-    NOTE: It seems that only the current years daily production data is stored on an inverter.
+    NOTE: It seems that only the current year daily production data is stored on an inverter.
 
 - irradiance_history
 
