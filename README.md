@@ -45,7 +45,11 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
 - irradiance_history
 
-    Irradiance history is an estimate of the solar potential for a site over the period of day.
+    Irradiance history is an estimate of the solar potential for a site over the period of day, it is defined for the period from dawn to dusk.
+
+        _measurement    `sun`
+        _field          `irradiance`
+
 
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by

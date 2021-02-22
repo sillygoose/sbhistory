@@ -181,7 +181,7 @@ class Site:
                 for point in irradiance:
                     t = point['t']
                     v = point['v'] * solar_properties.area * solar_properties.efficiency
-                    lp = f'production,_inverter=site irradiance={round(v, 1)} {t}'
+                    lp = f'sun irradiance={round(v, 1)} {t}'
                     lp_points.append(lp)
                 date += delta
 
