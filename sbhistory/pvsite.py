@@ -160,7 +160,7 @@ class Site:
             delta = datetime.timedelta(days=1)
             date = datetime.datetime(year=start.year, month=start.month, day=start.day)
             end_date = datetime.datetime.today() + delta
-            print(f"Populating irradiance values from {date} to {end_date}")
+            print(f"Populating irradiance values from {date.date()} to {end_date.date()}")
 
             lp_points = []
             while date < end_date:
