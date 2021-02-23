@@ -1,12 +1,11 @@
 """Code to interface with the SMA inverters and return state or history."""
 
 import asyncio
-import math
 import logging
 import dateutil
 import datetime
 import clearsky
-from pprint import pprint
+# from pprint import pprint
 
 from inverter import Inverter
 from influx import InfluxDB
@@ -152,21 +151,16 @@ class Site:
     async def populate_irradiance(self, config):
         try:
             start = config.sbhistory.start
-            site = config.multisma2.site
+            site_properties = config.multisma2.site
             solar_properties = config.multisma2.solar_properties
 
-            tzinfo = dateutil.tz.gettz(site.tz)
-            siteinfo = LocationInfo(name=site.name, region=site.region, timezone=site.tz, latitude=site.latitude, longitude=site.longitude)
+            tzinfo = dateutil.tz.gettz(site_properties.tz)
+            siteinfo = LocationInfo(name=site_properties.name, region=site_properties.region, timezone=site_properties.tz, latitude=site_properties.latitude, longitude=site_properties.longitude)
 
             delta = datetime.timedelta(days=1)
             date = datetime.datetime(year=start.year, month=start.month, day=start.day)
             end_date = datetime.datetime.today() + delta
             print(f"Populating irradiance values from {date} to {end_date}")
-
-            sigma = math.radians(solar_properties.tilt)
-            orientation = 180 - solar_properties.azimuth
-            phi_c = math.radians(orientation)
-            rho = solar_properties.get('rho', 0.0)
 
             lp_points = []
             while date < end_date:
@@ -174,10 +168,7 @@ class Site:
                 astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
                 dawn = astral['dawn']
                 dusk = astral['dusk']
-                doy = dawn.timetuple().tm_yday
-
-                # Get irradiance data for today and convert to InfluxDB line protocol
-                irradiance = clearsky.global_irradiance(site=site, dawn=dawn, dusk=dusk, n=doy, sigma=sigma, phi_c=phi_c, rho=rho)
+                irradiance = clearsky.global_irradiance(site_properties, solar_properties, dawn, dusk)
                 for point in irradiance:
                     t = point['t']
                     v = point['v'] * solar_properties.area * solar_properties.efficiency

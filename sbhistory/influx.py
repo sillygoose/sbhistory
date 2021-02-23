@@ -26,6 +26,7 @@ LP_LOOKUP = {
     'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
 }
 
+
 class InfluxDB():
     def __init__(self, enabled):
         self._client = None
