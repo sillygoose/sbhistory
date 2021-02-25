@@ -32,6 +32,7 @@ setup(
         "pysolar",
         "python-dateutil",
         "python-configuration",
+        "pyyaml",
     ],
     zip_safe=True,
 )
