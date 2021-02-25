@@ -21,5 +21,5 @@ from(bucket: "multisma2")
 
 from(bucket: "multisma2")
   |> range(start: days_to_visualize)
-  |> filter(fn: (r) => r._measurement == "sun" and r._field == "irradiance")
-  |> yield(name: "irradiance")
+  |> filter(fn: (r) => r._measurement == "sun" and r._field == "solar_potential")
+  |> yield(name: "solar_potential")
