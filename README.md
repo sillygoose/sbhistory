@@ -45,10 +45,10 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
 - irradiance_history
 
-    Irradiance history is an estimate of the solar potential for a site over the period of day, it is defined for the period from dawn to dusk.
+    The irradiance history outputs includes two measurements, irradiance is the estimated power (W/m<sup>2</sup>) available at a given moment; the solar potential multiplies the irradiance by the panel area and panel efficiency and is an estimate of the solar potential for the site (in W).  Both values are produced over the period from dawn to dusk.
 
         _measurement    `sun`
-        _field          `irradiance`
+        _field          `irradiance`, `solar_potential`
 
 
 ## Errors
