@@ -171,8 +171,11 @@ class Site:
                 irradiance = clearsky.global_irradiance(site_properties, solar_properties, dawn, dusk)
                 for point in irradiance:
                     t = point['t']
-                    v = point['v'] * solar_properties.area * solar_properties.efficiency
+                    v = point['v']
                     lp = f'sun irradiance={round(v, 1)} {t}'
+                    lp_points.append(lp)
+                    v *= solar_properties.area * solar_properties.efficiency
+                    lp = f'sun solar_potential={round(v, 1)} {t}'
                     lp_points.append(lp)
                 date += delta
 
