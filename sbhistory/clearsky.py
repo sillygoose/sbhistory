@@ -43,6 +43,12 @@ def current_global_irradiance(site_properties, solar_properties, timestamp):
     phi = phi_s - phi_c
     cos_phi = math.cos(phi)
 
+    # Workaround for a quirk of pvsolar since the airmass for the sun ele===altitude of zero
+    # is infinite and very small numbers close to zero result in NaNs being returned rather
+    # than zero
+    if altitude < 0.0:
+        altitude = -1.0
+
     cos_theta = cos_beta * cos_phi * sin_sigma + sin_beta * cos_sigma
     ib = get_radiation_direct(when=dt, altitude_deg=altitude)
     ibc = ib * cos_theta
@@ -74,7 +80,7 @@ if __name__ == "__main__":
     site_properties = config.multisma2.site
     solar_properties = config.multisma2.solar_properties
 
-    timestamp = 1614010000
+    timestamp = 1611923100
     igc = current_global_irradiance(site_properties, solar_properties, timestamp)
     print(f"{datetime.datetime.fromtimestamp(timestamp)}   {igc:.0f}")
 

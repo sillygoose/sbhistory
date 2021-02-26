@@ -5,6 +5,7 @@ import logging
 import dateutil
 import datetime
 import clearsky
+import math
 # from pprint import pprint
 
 from inverter import Inverter
@@ -172,11 +173,9 @@ class Site:
                 for point in irradiance:
                     t = point['t']
                     v = point['v']
-                    lp = f'sun irradiance={round(v, 1)} {t}'
-                    lp_points.append(lp)
-                    v *= solar_properties.area * solar_properties.efficiency
-                    lp = f'sun solar_potential={round(v, 1)} {t}'
-                    lp_points.append(lp)
+                    if not math.isnan(v):
+                        lp = f'sun irradiance={round(v, 1)} {t}'
+                        lp_points.append(lp)
                 date += delta
 
             self._influx.write_points(lp_points)

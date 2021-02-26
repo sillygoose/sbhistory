@@ -45,11 +45,14 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
 - irradiance_history
 
-    The irradiance history outputs includes two measurements, irradiance is the estimated power (W/m<sup>2</sup>) available at a given moment; the solar potential multiplies the irradiance by the panel area and panel efficiency and is an estimate of the solar potential for the site (in W).  Both values are produced over the period from dawn to dusk.
+    The irradiance history output is the estimated solar radiation (W/m<sup>2</sup>) available at a specific time on a collector with a fixed azimuth and tilt.  This varies through the year and takes into account the location, moisture (cold winter air holds less moisture and is clearer than warm moist air), and other seasonal effects.
 
         _measurement    `sun`
-        _field          `irradiance`, `solar_potential`
+        _field          `irradiance`
 
+    You can use the irradiance to estimate the solar potential for your PV array by multiplying the irradiance by the area of the array (in m<sup>2</sup>) and the unitless efficiency, i.e., a 300W panel with an area of 2 m<sup>2</sup> has an efficiency of 0.15.
+
+    Keep in mind it is just a best guess since other factors such as diffuse and reflected radiation for a site are harder to quantify.
 
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by

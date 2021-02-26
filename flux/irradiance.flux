@@ -6,11 +6,9 @@
 //
 // InfluxDB 1.8.x users should add the retention policy to the bucket name, ie, 'multisma2/autogen'
 
-days_to_visualize = -5d     // Visualize the last 5 days of site total production
-
 // Collect the site total production data
 from(bucket: "multisma2")
-  |> range(start: days_to_visualize)
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
   |> filter(fn: (r) => r._measurement == "production" and r._inverter == "site" and r._field == "total_wh")
   |> elapsed(unit: 1s)
   |> difference(nonNegative: true, columns: ["_value"])
@@ -20,6 +18,6 @@ from(bucket: "multisma2")
   |> yield(name: "production")
 
 from(bucket: "multisma2")
-  |> range(start: days_to_visualize)
-  |> filter(fn: (r) => r._measurement == "sun" and r._field == "solar_potential")
-  |> yield(name: "solar_potential")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r._measurement == "sun" and r._field == "irradiance")
+  |> yield(name: "irradiance")
