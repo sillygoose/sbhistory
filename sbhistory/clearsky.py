@@ -55,6 +55,10 @@ def current_global_irradiance(site_properties, solar_properties, timestamp):
     idc = C * ib * (1 + cos_sigma) / 2
     irc = rho * ib * (sin_beta + C) * ((1 - cos_sigma) / 2)
     igc = ibc + idc + irc
+
+    # If we still get a bad result just return 0
+    if math.isnan(igc):
+        igc = 0.0
     return igc
 
 

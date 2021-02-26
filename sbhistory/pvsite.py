@@ -173,9 +173,8 @@ class Site:
                 for point in irradiance:
                     t = point['t']
                     v = point['v']
-                    if not math.isnan(v):
-                        lp = f'sun irradiance={round(v, 1)} {t}'
-                        lp_points.append(lp)
+                    lp = f'sun irradiance={round(v, 1)} {t}'
+                    lp_points.append(lp)
                 date += delta
 
             self._influx.write_points(lp_points)
