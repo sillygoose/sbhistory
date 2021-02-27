@@ -5,7 +5,6 @@ import logging
 import dateutil
 import datetime
 import clearsky
-import math
 # from pprint import pprint
 
 from inverter import Inverter
