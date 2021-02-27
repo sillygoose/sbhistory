@@ -4,6 +4,8 @@
 # https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/
 
 import logging
+import os
+from config import config_from_yaml
 
 from influxdb_client import InfluxDBClient, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
@@ -28,20 +30,57 @@ LP_LOOKUP = {
 
 
 class InfluxDB():
-    def __init__(self, enabled):
+    def __init__(self):
         self._client = None
         self._write_api = None
-        self._enabled = enabled
+        self._enabled = False
 
-    def start(self, url, bucket, org, token):
-        if not self._enabled:
+    def check_config(self, config):
+        """Check that the needed YAML options exist."""
+        required_keys = ['url', 'token', 'bucket', 'org']
+        for key in required_keys:
+            if key not in config.keys():
+                logger.error(f"Missing required 'influxdb2' option in YAML file: '{key}'")
+                return False
+        return True
+
+    def start(self, config):
+        key = 'enable'
+        if key not in config.keys():
+            logger.error(f"Missing required 'influxdb2' option in YAML file: '{key}'")
+            return False
+
+        if not isinstance(config.enable, bool):
+            logger.error(f"The influxdb 'enable' option is not a boolean '{config.enable}'")
+            return False
+
+        if not config.enable:
+            logger.error(f"The influxdb 'enable' option must be enabled to use 'sbhistory': '{config.enable}'")
+            return False
+
+        if self.check_config(config) is False:
+            return False
+
+        self._bucket = config.bucket
+        self._client = InfluxDBClient(url=config.url, token=config.token, org=config.org)
+        if not self._client:
+            logger.error(f"Failed to get InfluxDBClient object from {config.url} (check your url, token, and/or organization)")
+            return False
+        self._write_api = self._client.write_api(write_options=SYNCHRONOUS)
+        if not self._write_api :
+            logger.error(f"Failed to get client write_api() object from {config.url}")
+            return False
+        query_api = self._client.query_api()
+        if not query_api:
+            logger.error(f"Failed to get client query_api() object from {config.url}")
+            return False
+        try:
+            query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
+            logger.info(f"Connected to the InfluxDB database at {config.url}, bucket '{self._bucket}'")
             return True
-        self._bucket = bucket
-        self._client = InfluxDBClient(url=url, token=token, org=org)
-        self._write_api = self._client.write_api(write_options=SYNCHRONOUS) if self._client else None
-        result = self._client if self._client else False
-        logger.info(f"{'Opened' if result else 'Failed to open'} the InfluxDB database '{bucket}' at {url}")
-        return result
+        except Exception:
+            logger.error(f"Unable to access bucket '{self._bucket}' at {config.url}")
+        return False
 
     def stop(self):
         if self._write_api:
@@ -100,3 +139,13 @@ class InfluxDB():
         except Exception as e:
             logger.error(f"Database write_points() call failed in write_history(): {e}")
         return result
+
+
+if __name__ == "__main__":
+    yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+    config = config_from_yaml(data=yaml_file, read_from_file=True)
+    influxdb = InfluxDB()
+    result = influxdb.start(config=config.multisma2.influxdb2)
+    if not result:
+        print("Something failed")
+    influxdb.stop()

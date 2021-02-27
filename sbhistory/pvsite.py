@@ -27,7 +27,7 @@ class Site:
     def __init__(self, session, config):
         """Create a new Site object."""
         self._config = config
-        self._influx = InfluxDB(config.multisma2.influxdb2.enable)
+        self._influx = InfluxDB()
         self._inverters = []
         for inverter in config.multisma2.inverters:
             inv = inverter.get('inverter', None)
@@ -36,7 +36,7 @@ class Site:
     async def start(self):
         """Initialize the Site object."""
         config = self._config
-        if not self._influx.start(url=config.multisma2.influxdb2.url, bucket=config.multisma2.influxdb2.bucket, org=config.multisma2.influxdb2.org, token=config.multisma2.influxdb2.token):
+        if not self._influx.start(config=config.multisma2.influxdb2):
             return False
         results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
         return False not in results
