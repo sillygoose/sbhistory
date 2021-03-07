@@ -19,6 +19,40 @@ from config import config_from_yaml
 logger = logging.getLogger('sbhistory')
 
 
+def buildYAMLExceptionString(exception, file='sbhistory'):
+    e = exception
+    try:
+        type = ''
+        file = file
+        line = 0
+        column = 0
+        info = ''
+
+        if e.args[0]:
+            type = e.args[0]
+            type += ' '
+
+        if e.args[1]:
+            file = os.path.basename(e.args[1].name)
+            line = e.args[1].line
+            column = e.args[1].column
+
+        if e.args[2]:
+            info = os.path.basename(e.args[2])
+
+        if e.args[3]:
+            file = os.path.basename(e.args[3].name)
+            line = e.args[3].line
+            column = e.args[3].column
+
+        errmsg = f"YAML file error {type}in {file}:{line}, column {column}: {info}"
+
+    except Exception:
+        errmsg = f"YAML file error and no idea how it is encoded."
+
+    return errmsg
+
+
 class Multisma2:
     class NormalCompletion(Exception):
         pass
@@ -30,8 +64,13 @@ class Multisma2:
         self._loop = asyncio.new_event_loop()
         self._session = None
         self._site = None
-        yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
-        self._config = config_from_yaml(data=yaml_file, read_from_file=True)
+        try:
+            yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+            self._config = config_from_yaml(data=yaml_file, read_from_file=True)
+        except Exception as e:
+            error_message = buildYAMLExceptionString(exception=e, file='sbhistory.yaml')
+            print(error_message)
+            raise Multisma2.FailedInitialization
 
     def run(self):
         try:
@@ -85,8 +124,13 @@ class Multisma2:
 
 def main():
     """Set up and start multisma2."""
-    multisma2 = Multisma2()
-    multisma2.run()
+    try:
+        multisma2 = Multisma2()
+        multisma2.run()
+    except Multisma2.FailedInitialization:
+        pass
+    except Exception as e:
+        print(f"Unexpected exception: {e}")
 
 
 if __name__ == "__main__":
