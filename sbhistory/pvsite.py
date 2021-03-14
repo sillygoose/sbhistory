@@ -5,6 +5,8 @@ import logging
 import dateutil
 import datetime
 import clearsky
+import csv
+import os
 # from pprint import pprint
 
 from inverter import Inverter
@@ -37,17 +39,25 @@ class Site:
         config = self._config
         if not self._influx.start(config=config.multisma2.influxdb2):
             return False
-        results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
-        return False not in results
+        return True
 
     async def stop(self):
         """Shutdown the Site object."""
         await asyncio.gather(*(inverter.close() for inverter in self._inverters))
         self._influx.stop()
 
+    async def start_inverters(self):
+        results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
+        return False not in results
+
+    async def stop_inverters(self):
+        await asyncio.gather(*(inverter.close() for inverter in self._inverters))
+
     # daily totals, day increments
     async def populate_daily_history(self):
         cfg = self._config
+        await self.start_inverters()
+
         now = datetime.datetime.now()
         start = datetime.datetime(year=cfg.sbhistory.start.year, month=cfg.sbhistory.start.month, day=cfg.sbhistory.start.day)
         stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
@@ -104,10 +114,13 @@ class Site:
 
         self._influx.write_history(inverters, 'production/midnight')
         print()
+        await self.stop_inverters()
 
     # fine production, 5 minute increments
     async def populate_fine_history(self):
         config = self._config
+        await self.start_inverters()
+
         delta = datetime.timedelta(days=1)
         date = datetime.date(year=config.sbhistory.start.year, month=config.sbhistory.start.month, day=config.sbhistory.start.day)
         end_date = datetime.date.today() + delta
@@ -147,6 +160,7 @@ class Site:
             self._influx.write_history(inverters, 'production/total_wh')
             date += delta
         print()
+        await self.stop_inverters()
 
     async def populate_irradiance(self, config):
         try:
@@ -172,7 +186,8 @@ class Site:
                 for point in irradiance:
                     t = point['t']
                     v = point['v']
-                    lp = f'sun irradiance={round(v, 1)} {t}'
+                    # sample: sun,_type=modeled irradiance=800 1556813561098
+                    lp = f'sun,_type=modeled irradiance={round(v, 1)} {t}'
                     lp_points.append(lp)
                 date += delta
 
@@ -181,8 +196,75 @@ class Site:
         except Exception as e:
             logger.error(f"An exception occurred in populate_irradiance(): {e}")
 
+    async def populate_csv_file(self, config):
+        try:
+            site_properties = config.multisma2.site
+            tzinfo = dateutil.tz.gettz(site_properties.tz)
+
+            directory = config.sbhistory.csv_file.path
+            for entry in os.scandir(directory):
+                if not entry.is_file():
+                    continue
+                if not entry.path.endswith(".csv"):
+                    continue
+
+                csv_indices = {}
+                lp_points = []
+                with open(entry.path, newline='') as csvfile:
+                    print(f"Processing file {entry.path}")
+                    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                    for row in reader:
+                        if reader.line_num == 1:
+                            to_find = ['Date', 'Time', 'Tpv', 'Ta', 'Irr', 'Irr Unit', 'Temp Unit']
+                            for heading in to_find:
+                                index = row.index(heading)
+                                csv_indices[heading] = index
+                        else:
+                            irradiance = row[csv_indices['Irr']]
+                            if irradiance == '<100':
+                                irradiance = '0'
+                            irradiance = float(irradiance)
+
+                            date = row[csv_indices['Date']]
+                            date_dmy = date.split('.')
+                            d = datetime.date(year=int('20'+date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0]))
+
+                            time = row[csv_indices['Time']]
+                            time_hms = time.split(':')
+                            t = datetime.time(hour=int(time_hms[0]), minute=int(time_hms[1]))
+                            dt = datetime.datetime.combine(date=d, time=t, tzinfo=tzinfo)
+                            ts = int(dt.timestamp())
+
+                            tpv = row[csv_indices['Tpv']]
+                            if tpv == 'ERR':
+                                tpv = None
+                            ta = row[csv_indices['Ta']]
+                            if ta == 'ERR':
+                                ta = None
+
+                            # sample: sun,_type=measured irradiance=800 1556813561098
+                            lp_points.append(f'sun,_type=measured irradiance={irradiance} {ts}')
+                            if tpv:
+                                # sample: sun,_type=pv temperature=10 1556813561098
+                                lp_points.append(f'sun,_type=working temperature={float(ta)} {ts}')
+                            if ta:
+                                # sample: sun,_type=ambient temperature=8 1556813561098
+                                lp_points.append(f'sun,_type=ambient temperature={float(tpv)} {ts}')
+                            print(".", end='', flush=True)
+
+                    self._influx.write_points(lp_points)
+                    print()
+                    #print(f"Wrote {len(lp_points)} points to database")
+
+        except Exception as e:
+            print()
+            logger.error(f"An error occurred in populate_csv_file(): {e}")
+        print()
+
     async def run(self):
         config = self._config
+        if config.sbhistory.outputs.csv_file:
+            await self.populate_csv_file(config)
         if config.sbhistory.outputs.daily_history:
             await self.populate_daily_history()
         if config.sbhistory.outputs.fine_history:

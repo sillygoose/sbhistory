@@ -26,6 +26,7 @@ LP_LOOKUP = {
     'production/total_wh': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
     'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'midnight'},
     'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
+    'sun/irradiance': {'measurement': 'sun', 'tag': 'measured', 'field': 'irradiance'},
 }
 
 
