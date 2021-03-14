@@ -48,7 +48,7 @@ def buildYAMLExceptionString(exception, file='sbhistory'):
         errmsg = f"YAML file error {type}in {file}:{line}, column {column}: {info}"
 
     except Exception:
-        errmsg = f"YAML file error and no idea how it is encoded."
+        errmsg = "YAML file error and no idea how it is encoded."
 
     return errmsg
 

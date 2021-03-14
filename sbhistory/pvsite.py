@@ -227,7 +227,7 @@ class Site:
 
                             date = row[csv_indices['Date']]
                             date_dmy = date.split('.')
-                            d = datetime.date(year=int('20'+date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0]))
+                            d = datetime.date(year=int('20' + date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0]))
 
                             time = row[csv_indices['Time']]
                             time_hms = time.split(':')
@@ -254,7 +254,6 @@ class Site:
 
                     self._influx.write_points(lp_points)
                     print()
-                    #print(f"Wrote {len(lp_points)} points to database")
 
         except Exception as e:
             print()
