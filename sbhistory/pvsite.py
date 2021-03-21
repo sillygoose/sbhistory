@@ -421,7 +421,7 @@ class Site:
                 csv_indices = {}
                 lp_points = []
                 with open(entry.path, newline='') as csvfile:
-                    print(f"Processing file {entry.path}")
+                    print(f"Processing file {entry.name}")
                     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
                     for row in reader:
                         if reader.line_num == 1:
@@ -431,7 +431,7 @@ class Site:
                                 csv_indices[heading] = index
                         else:
                             irradiance = row[csv_indices['Irr']]
-                            if irradiance == '<100':
+                            if irradiance.startswith('<'):
                                 irradiance = '0'
                             irradiance = float(irradiance)
 
@@ -467,7 +467,7 @@ class Site:
 
         except Exception as e:
             print()
-            logger.error(f"An error occurred in populate_csv_file(): {e}")
+            logger.error(f"An error occurred in {entry.name}, line {reader.line_num}: {e}")
         print()
 
     async def run(self):
