@@ -1,5 +1,5 @@
 # sbhistory
-Application to pull Sunny Boy inverter history and send to a InfluxDB 2.x or 1.8.x database
+Application to pull Sunny Boy inverter history and send to a InfluxDB 2.x database (InfluxDB 1.8.x is also supported).  Additional options to model irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
 
 ## Installation
 Python 3.7 or better is required, you can then install the Python requirements for this application:
@@ -10,7 +10,7 @@ Python 3.7 or better is required, you can then install the Python requirements f
 ```
 
 ## Use
-Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for data.
+Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for the datypu will be uploading.
 
 Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your local site and inverters.  Run the application from the command line using Python 3.7 or later:
 
@@ -25,6 +25,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     `daily history` is the inverter(s) total Wh meter recorded at midnight (local time) each day:
 
+        InfluxDB total Wh schema:
         _measurement    `production`
         _inverter       `inverter name(s)`, 'site'
         _field          `total_wh`
@@ -36,6 +37,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     `fine history `is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
 
+        InfluxDB total Wh schema:
         _measurement    `production`
         _inverter       `inverter name(s)`, `site`
         _field          `total_wh`
@@ -49,6 +51,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     The `irradiance` output is the estimated solar radiation (W/m<sup>2</sup>) available at a specific time on a collector with a fixed azimuth and tilt.  This varies through the year and takes into account the location, moisture (cold winter air holds less moisture than warm air), dust, and other seasonal effects.
 
+        InfluxDB irradiance schema:
         _measurement    `sun`
         _field          `irradiance`
         _type           `modeled`
@@ -61,8 +64,19 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     The `csv_file` output reads log files from the Seaward Solar Survey 200R Irradiance Meter, this became an essential tool to verify the irradiance model with the actual solar flux hitting the panels (turned out to be very accurate without any further adjustment):
 
+        InfluxDB irradiance schema:
         _measurement    `sun`
         _field          `irradiance`
+        _type           `measured`
+
+        InfluxDB panel temperature schema:
+        _measurement    `sun`
+        _field          `temperature`
+        _type           `working`
+
+        InfluxDB ambient temperature schema:
+        _measurement    `sun`
+        _field          `temperature`
         _type           `ambient`
 
     When enabled this will read every .csv file in the `path` option and write the results to InfluxDB.
