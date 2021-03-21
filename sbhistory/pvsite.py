@@ -459,7 +459,7 @@ class Site:
                             # sample: sun,_type=measured irradiance=800 1556813561098
                             lp_points.append(f'sun,_type=measured irradiance={irradiance} {ts}')
                             if tpv:
-                                # sample: sun,_type=pv temperature=10 1556813561098
+                                # sample: sun,_type=working temperature=10 1556813561098
                                 lp_points.append(f'sun,_type=working temperature={float(ta)} {ts}')
                             if ta:
                                 # sample: sun,_type=ambient temperature=8 1556813561098
