@@ -3,6 +3,7 @@
 # InfluxDB Line Protocol Reference
 # https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/
 
+import time
 import logging
 import os
 from config import config_from_yaml
@@ -24,7 +25,7 @@ LP_LOOKUP = {
     'status/grid_relay': {'measurement': 'status', 'tag': '_inverter', 'field': 'grid_relay'},
     'status/condition': {'measurement': 'status', 'tag': '_inverter', 'field': 'condition'},
     'production/total_wh': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
-    'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'midnight'},
+    'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
     'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
     'sun/irradiance': {'measurement': 'sun', 'tag': 'measured', 'field': 'irradiance'},
 }
@@ -34,6 +35,8 @@ class InfluxDB():
     def __init__(self):
         self._client = None
         self._write_api = None
+        self._query_api = None
+        self._delete_api = None
         self._enabled = False
 
     def check_config(self, config):
@@ -71,12 +74,16 @@ class InfluxDB():
         if not self._write_api :
             logger.error(f"Failed to get client write_api() object from {config.url}")
             return False
-        query_api = self._client.query_api()
-        if not query_api:
+        self._delete_api = self._client.delete_api()
+        if not self._delete_api :
+            logger.error(f"Failed to get client delete_api() object from {config.url}")
+            return False
+        self._query_api = self._client.query_api()
+        if not self._query_api:
             logger.error(f"Failed to get client query_api() object from {config.url}")
             return False
         try:
-            query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
+            self._query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
             logger.info(f"Connected to the InfluxDB database at {config.url}, bucket '{self._bucket}'")
             return True
         except Exception:
@@ -104,6 +111,14 @@ class InfluxDB():
             result = False
         return result
 
+    def query(self):
+        try:
+            self._query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
+            return True
+        except Exception:
+            logger.error(f"Unable to query from '{self._bucket}'")
+        return False
+
     def write_history(self, site, topic):
         result = False
         if not self._write_api:
@@ -124,11 +139,12 @@ class InfluxDB():
             for history in inverter:
                 t = history['t']
                 v = history['v']
+                midnight = history.get('midnight', 'no')
                 if v is None:
                     # logger.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
                     continue
                 elif isinstance(v, int):
-                    lp = f'{measurement},{tag}={name} {field}={v}i {t}'
+                    lp = f'{measurement},{tag}={name},_midnight={midnight} {field}={v}i {t}'
                     lps.append(lp)
                 else:
                     logger.error(f"write_history(): unanticipated type '{type(v)}' in measurement '{measurement}/{field}'")
