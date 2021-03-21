@@ -7,12 +7,12 @@ import datetime
 import clearsky
 import csv
 import os
-from pprint import pprint
+# from pprint import pprint
 
 from inverter import Inverter
 from influx import InfluxDB
 
-from astral.sun import midnight, sun
+from astral.sun import sun
 from astral import LocationInfo
 
 
@@ -22,82 +22,85 @@ logger = logging.getLogger('sbhistory')
 def diff_month(d1, d2):
     return (d1.year - d2.year) * 12 + d1.month - d2.month
 
+
 def check_daily_history(config):
     current_key = config.sbhistory
     if not current_key or 'daily_history' not in current_key.keys():
-        logger.warning(f"Expected option 'daily_history' in the 'sbhistory' settings")
+        logger.warning("Expected option 'daily_history' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.daily_history
     if not current_key or 'enable' not in current_key.keys():
-        logger.error(f"Missing required 'enable' option in 'daily_history' settings")
+        logger.error("Missing required 'enable' option in 'daily_history' settings")
         return False
 
     if not current_key.enable:
-        logger.warning(f"daily_history' option is disabled in the 'sbhistory' settings")
+        logger.warning("daily_history' option is disabled in the 'sbhistory' settings")
         return False
 
     if 'start' not in current_key.keys():
-        logger.error(f"Missing required 'start' option in 'daily_history' settings")
+        logger.error("Missing required 'start' option in 'daily_history' settings")
         return False
 
     if 'sma_history_fix' in current_key.keys():
         current_key = config.sbhistory.daily_history.sma_history_fix
         if not current_key or 'enable' not in current_key.keys():
-            logger.error(f"Missing required 'enable' option in 'sma_history_fix' settings")
+            logger.error("Missing required 'enable' option in 'sma_history_fix' settings")
             return False
 
         if not current_key.enable:
-            logger.info(f"sma_history_fix' option is disabled in the 'sbhistory' settings")
+            logger.info("sma_history_fix' option is disabled in the 'sbhistory' settings")
         elif 'target_date' not in current_key.keys():
-            logger.error(f"Missing required 'target_date' option in YAML file when 'enable' is True")
+            logger.error("Missing required 'target_date' option in YAML file when 'enable' is True")
             return False
 
     return True
+
 
 def check_fine_history(config):
     current_key = config.sbhistory
     if not current_key or 'fine_history' not in current_key.keys():
-        logger.warning(f"Expected option 'fine_history' in the 'sbhistory' settings")
+        logger.warning("Expected option 'fine_history' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.fine_history
     if not current_key or 'enable' not in current_key.keys():
-        logger.error(f"Missing required 'enable' option in 'fine_history' settings")
+        logger.error("Missing required 'enable' option in 'fine_history' settings")
         return False
 
     if not current_key.enable:
-        logger.info(f"fine_history' option is disabled in the 'sbhistory' settings")
+        logger.info("fine_history' option is disabled in the 'sbhistory' settings")
         return False
 
     if 'start' not in current_key.keys():
-        logger.error(f"Missing required 'start' option in 'fine_history' settings")
+        logger.error("Missing required 'start' option in 'fine_history' settings")
         return False
 
     return True
 
+
 def check_irradiance(config):
     current_key = config.sbhistory
     if not current_key or 'irradiance' not in current_key.keys():
-        logger.warning(f"Expected option 'irradiance' in the 'sbhistory' settings")
+        logger.warning("Expected option 'irradiance' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.irradiance
     if not current_key or 'enable' not in current_key.keys():
-        logger.error(f"Missing required 'enable' option in 'irradiance' settings")
+        logger.error("Missing required 'enable' option in 'irradiance' settings")
         return False
 
     if not current_key.enable:
-        logger.info(f"irradiance' option is disabled in the 'sbhistory' settings")
+        logger.info("irradiance' option is disabled in the 'sbhistory' settings")
         return False
 
     if 'start' not in current_key.keys():
-        logger.error(f"Missing required 'start' option in 'irradiance' settings")
+        logger.error("Missing required 'start' option in 'irradiance' settings")
         return False
 
     current_key = config.multisma2
     if not current_key:
-        logger.error(f"Missing required 'multisma2' section in YAML file settings")
+        logger.error("Missing required 'multisma2' section in YAML file settings")
         return False
 
     keys = ['site', 'solar_properties']
@@ -122,23 +125,24 @@ def check_irradiance(config):
 
     return True
 
+
 def check_csv_file(config):
     current_key = config.sbhistory
     if not current_key or 'csv_file' not in current_key.keys():
-        logger.warning(f"Expected option 'csv_file' in the 'sbhistory' settings")
+        logger.warning("Expected option 'csv_file' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.csv_file
     if not current_key or 'enable' not in current_key.keys():
-        logger.error(f"Missing required 'enable' option in 'csv_file' settings")
+        logger.error("Missing required 'enable' option in 'csv_file' settings")
         return False
 
     if not current_key.enable:
-        logger.info(f"csv_file' option is disabled in the 'sbhistory' settings")
+        logger.info("csv_file' option is disabled in the 'sbhistory' settings")
         return False
 
     if 'path' not in current_key.keys():
-        logger.error(f"Missing required 'path' option in 'csv_file' settings")
+        logger.error("Missing required 'path' option in 'csv_file' settings")
         return False
 
     return True
@@ -276,7 +280,7 @@ class Site:
             for t, v in total.items():
                 if count[t] == len(inverters):
                     site_total.append({'t': t, 'v': v, 'midnight': 'yes'})
-                    #print(f"\nmidnight detected on {t} with meter {v}")
+                    # print(f"\nmidnight detected on {t} with meter {v}")
             site_total.insert(0, {'inverter': 'site'})
             inverters.append(site_total)
 
@@ -300,7 +304,7 @@ class Site:
         delta = datetime.timedelta(days=1)
         end_date = datetime.date.today() + delta
         if recent:
-            print(f"Populating some recent total_wh values")
+            print("Populating some recent total_wh values")
         else:
             print(f"Populating fine history values from {date} to {end_date}")
 
@@ -315,9 +319,9 @@ class Site:
 
             total = {}
             count = {}
-            #await self.start_inverters()
+            # await self.start_inverters()
             inverters = await asyncio.gather(*(inverter.read_fine_history(start=int(start.timestamp()), stop=int(stop.timestamp())) for inverter in self._inverters))
-            #await self.stop_inverters()
+            # await self.stop_inverters()
 
             for inverter in inverters:
                 print(".", end='', flush=True)
@@ -350,7 +354,7 @@ class Site:
                         dt = datetime.datetime.fromtimestamp(t)
                         midnight = 'yes' if dt.hour == 0 and dt.minute == 0 else 'no'
                         if midnight == 'yes':
-                            #print(f"\nmidnight detected on {t} with meter {v}")
+                            # print(f"\nmidnight detected on {t} with meter {v}")
                             midnight = 'yes'
                         site_total.append({'t': t, 'v': v, 'midnight': midnight})
                 site_total.insert(0, {'inverter': 'site'})

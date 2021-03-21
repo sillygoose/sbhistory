@@ -25,6 +25,7 @@ setup(
         "aiohttp",
         "asyncio",
         "async_timeout",
+        "csv",
         "jmespath",
         "influxdb-client",
         "paho-mqtt",

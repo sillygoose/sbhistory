@@ -20,39 +20,52 @@ Copy the file `sample.yaml` to `sbhistory.yaml` and fill in the details for your
 ```
 
 ## Outputs
-Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version the following outputs can be selected to be sent to InfluxDB:
+Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version the following outputs can be selected to be sent on to InfluxDB:
 - daily_history
 
-    Daily history is the inverter(s) total Wh meter recorded at midnight (local time) each day:
+    `daily history` is the inverter(s) total Wh meter recorded at midnight (local time) each day:
 
         _measurement    `production`
         _inverter       `inverter name(s)`, 'site'
-        _field          `midnight`
+        _field          `total_wh`
+        _midnight       `yes`
 
-    This makes finding the production for a day, month, year, or any period the difference between the two selected records.
+    This measurement makes finding the production for a day, month, year, or any period the difference between the two selected records.
 
 - fine_history
 
-    Fine history is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
+    `fine history `is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
 
         _measurement    `production`
         _inverter       `inverter name(s)`, `site`
         _field          `total_wh`
+        _midnight       `no` (`yes` is the measuremement occurs at midnight)
 
     Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
 
-    NOTE: It seems that only the current year daily production data is stored on an inverter.
+    NOTE: There is only limited production history stored on an inverter.
 
-- irradiance_history
+- irradiance
 
-    The irradiance history output is the estimated solar radiation (W/m<sup>2</sup>) available at a specific time on a collector with a fixed azimuth and tilt.  This varies through the year and takes into account the location, moisture (cold winter air holds less moisture and is clearer than warm moist air), and other seasonal effects.
+    The `irradiance` output is the estimated solar radiation (W/m<sup>2</sup>) available at a specific time on a collector with a fixed azimuth and tilt.  This varies through the year and takes into account the location, moisture (cold winter air holds less moisture than warm air), dust, and other seasonal effects.
 
         _measurement    `sun`
         _field          `irradiance`
+        _type           `modeled`
 
     You can use the irradiance to estimate the solar potential for your PV array by multiplying the irradiance by the area of the array (in m<sup>2</sup>) and the unitless efficiency, i.e., a 300W panel with an area of 2 m<sup>2</sup> has an efficiency of 0.15.
 
     Keep in mind it is just a best guess since other factors such as diffuse and reflected radiation for a site are harder to quantify.
+
+- csv_file
+
+    The `csv_file` output reads log files from the Seaward Solar Survey 200R Irradiance Meter, this became an essential tool to verify the irradiance model with the actual solar flux hitting the panels (turned out to be very accurate without any further adjustment):
+
+        _measurement    `sun`
+        _field          `irradiance`
+        _type           `ambient`
+
+    When enabled this will read every .csv file in the `path` option and write the results to InfluxDB.
 
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by

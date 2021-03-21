@@ -3,7 +3,6 @@
 # InfluxDB Line Protocol Reference
 # https://docs.influxdata.com/influxdb/v2.0/reference/syntax/line-protocol/
 
-import time
 import logging
 import os
 from config import config_from_yaml

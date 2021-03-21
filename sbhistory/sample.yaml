@@ -4,22 +4,28 @@
 # a few of its own for the start and outputs.
 
 sbhistory:
-  # Starting date to pull history from inverters
-  # Set the date to start the collection, make sure your database retention policy covers
-  # this start date, collection is up the current day.
-  start:
-    year: 2021
-    month: 1
-    day: 1
-
   # Select the outputs you want to populate the database
-  #   - fine_history is Wh meter in 5 minute increments (limited history)
   #   - daily_history is Wh meter in daily increments
-  #   - irradiance_history is an estimate of local irradiation (W)
-  outputs:
-    fine_history: True
-    daily_history: True
-    irradiance_history: True
+  #   - fine_history is Wh meter in 5 minute increments (limited inverter history)
+  #   - irradiance is an estimate of local irradiation (W)
+  #   - csv_file imports Seaward meter CSV irradiance files
+  daily_history:
+    enable: False
+    start: '2020-01-01'
+
+  # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
+  fine_history:
+    enable: False
+    start: '2021-03-01' # 'recent'
+
+  irradiance:
+    enable: False
+    start: '2021-03-01'
+
+  csv_file:
+    enable: False
+    path: '/path/to/seaward/files'
+
 
   # Application log file customization
   log:
