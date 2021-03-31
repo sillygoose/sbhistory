@@ -17,7 +17,7 @@ from astral.sun import sun
 from astral import LocationInfo
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 
 def current_global_irradiance(site_properties, solar_properties, timestamp):
@@ -26,7 +26,7 @@ def current_global_irradiance(site_properties, solar_properties, timestamp):
     n = dt.timetuple().tm_yday
 
     sigma = math.radians(solar_properties.tilt)
-    rho = solar_properties.get('rho', 0.0)
+    rho = solar_properties.get("rho", 0.0)
 
     C = 0.095 + 0.04 * math.sin(math.radians((n - 100) / 365))
     sin_sigma = math.sin(sigma)
@@ -68,18 +68,32 @@ def global_irradiance(site_properties, solar_properties, dawn, dusk):
     irradiance = []
     tzinfo = tz.gettz(site_properties.tz)
     dusk += datetime.timedelta(minutes=MINUTES)
-    dt = datetime.datetime(year=dawn.year, month=dawn.month, day=dawn.day, hour=dawn.hour, minute=int(int(dawn.minute / 10) * 10), tzinfo=tzinfo)
-    stop = datetime.datetime(year=dusk.year, month=dusk.month, day=dusk.day, hour=dusk.hour, minute=int(int(dusk.minute / 10) * 10), tzinfo=tzinfo)
+    dt = datetime.datetime(
+        year=dawn.year,
+        month=dawn.month,
+        day=dawn.day,
+        hour=dawn.hour,
+        minute=int(int(dawn.minute / 10) * 10),
+        tzinfo=tzinfo,
+    )
+    stop = datetime.datetime(
+        year=dusk.year,
+        month=dusk.month,
+        day=dusk.day,
+        hour=dusk.hour,
+        minute=int(int(dusk.minute / 10) * 10),
+        tzinfo=tzinfo,
+    )
     while dt < stop:
         timestamp = int(dt.timestamp())
         igc = current_global_irradiance(site_properties, solar_properties, timestamp)
-        irradiance.append({'t': timestamp, 'v': igc})
+        irradiance.append({"t": timestamp, "v": igc})
         dt += datetime.timedelta(minutes=MINUTES)
     return irradiance
 
 
 if __name__ == "__main__":
-    yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+    yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sbhistory.yaml")
     config = config_from_yaml(data=yaml_file, read_from_file=True)
     site_properties = config.multisma2.site
     solar_properties = config.multisma2.solar_properties
@@ -89,9 +103,15 @@ if __name__ == "__main__":
     print(f"{datetime.datetime.fromtimestamp(timestamp)}   {igc:.0f}")
 
     tzinfo = tz.gettz(site_properties.tz)
-    siteinfo = LocationInfo(name=site_properties.name, region=site_properties.region, timezone=site_properties.tz, latitude=site_properties.latitude, longitude=site_properties.longitude)
+    siteinfo = LocationInfo(
+        name=site_properties.name,
+        region=site_properties.region,
+        timezone=site_properties.tz,
+        latitude=site_properties.latitude,
+        longitude=site_properties.longitude,
+    )
     astral = sun(date=datetime.datetime.now(), observer=siteinfo.observer, tzinfo=tzinfo)
-    dawn = astral['dawn']
-    dusk = astral['dusk']
+    dawn = astral["dawn"]
+    dusk = astral["dusk"]
     igc_results = global_irradiance(site_properties, solar_properties, dawn, dusk)
     pprint(f"{igc_results}")

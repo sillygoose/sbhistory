@@ -7,6 +7,7 @@ import datetime
 import clearsky
 import csv
 import os
+
 # from pprint import pprint
 
 from inverter import Inverter
@@ -16,7 +17,7 @@ from astral.sun import sun
 from astral import LocationInfo
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 
 def diff_month(d1, d2):
@@ -25,12 +26,12 @@ def diff_month(d1, d2):
 
 def check_daily_history(config):
     current_key = config.sbhistory
-    if not current_key or 'daily_history' not in current_key.keys():
+    if not current_key or "daily_history" not in current_key.keys():
         logger.warning("Expected option 'daily_history' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.daily_history
-    if not current_key or 'enable' not in current_key.keys():
+    if not current_key or "enable" not in current_key.keys():
         logger.error("Missing required 'enable' option in 'daily_history' settings")
         return False
 
@@ -38,19 +39,19 @@ def check_daily_history(config):
         logger.warning("daily_history' option is disabled in the 'sbhistory' settings")
         return False
 
-    if 'start' not in current_key.keys():
+    if "start" not in current_key.keys():
         logger.error("Missing required 'start' option in 'daily_history' settings")
         return False
 
-    if 'sma_history_fix' in current_key.keys():
+    if "sma_history_fix" in current_key.keys():
         current_key = config.sbhistory.daily_history.sma_history_fix
-        if not current_key or 'enable' not in current_key.keys():
+        if not current_key or "enable" not in current_key.keys():
             logger.error("Missing required 'enable' option in 'sma_history_fix' settings")
             return False
 
         if not current_key.enable:
             logger.info("sma_history_fix' option is disabled in the 'sbhistory' settings")
-        elif 'target_date' not in current_key.keys():
+        elif "target_date" not in current_key.keys():
             logger.error("Missing required 'target_date' option in YAML file when 'enable' is True")
             return False
 
@@ -59,12 +60,12 @@ def check_daily_history(config):
 
 def check_fine_history(config):
     current_key = config.sbhistory
-    if not current_key or 'fine_history' not in current_key.keys():
+    if not current_key or "fine_history" not in current_key.keys():
         logger.warning("Expected option 'fine_history' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.fine_history
-    if not current_key or 'enable' not in current_key.keys():
+    if not current_key or "enable" not in current_key.keys():
         logger.error("Missing required 'enable' option in 'fine_history' settings")
         return False
 
@@ -72,7 +73,7 @@ def check_fine_history(config):
         logger.info("fine_history' option is disabled in the 'sbhistory' settings")
         return False
 
-    if 'start' not in current_key.keys():
+    if "start" not in current_key.keys():
         logger.error("Missing required 'start' option in 'fine_history' settings")
         return False
 
@@ -81,12 +82,12 @@ def check_fine_history(config):
 
 def check_irradiance(config):
     current_key = config.sbhistory
-    if not current_key or 'irradiance' not in current_key.keys():
+    if not current_key or "irradiance" not in current_key.keys():
         logger.warning("Expected option 'irradiance' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.irradiance
-    if not current_key or 'enable' not in current_key.keys():
+    if not current_key or "enable" not in current_key.keys():
         logger.error("Missing required 'enable' option in 'irradiance' settings")
         return False
 
@@ -94,7 +95,7 @@ def check_irradiance(config):
         logger.info("irradiance' option is disabled in the 'sbhistory' settings")
         return False
 
-    if 'start' not in current_key.keys():
+    if "start" not in current_key.keys():
         logger.error("Missing required 'start' option in 'irradiance' settings")
         return False
 
@@ -103,21 +104,21 @@ def check_irradiance(config):
         logger.error("Missing required 'multisma2' section in YAML file settings")
         return False
 
-    keys = ['site', 'solar_properties']
+    keys = ["site", "solar_properties"]
     for key in keys:
         if key not in current_key.keys():
             logger.error(f"Missing required '{key}' option in 'multisma2' settings")
             return False
 
     current_key = config.multisma2.site
-    keys = ['name', 'region', 'tz', 'latitude', 'longitude']
+    keys = ["name", "region", "tz", "latitude", "longitude"]
     for key in keys:
         if key not in current_key.keys():
             logger.error(f"Missing required '{key}' option in 'multisma2.site' settings")
             return False
 
     current_key = config.multisma2.solar_properties
-    keys = ['tilt', 'area']
+    keys = ["tilt", "area"]
     for key in keys:
         if key not in current_key.keys():
             logger.error(f"Missing required '{key}' option in 'multisma2.solar_properties' settings")
@@ -128,12 +129,12 @@ def check_irradiance(config):
 
 def check_csv_file(config):
     current_key = config.sbhistory
-    if not current_key or 'csv_file' not in current_key.keys():
+    if not current_key or "csv_file" not in current_key.keys():
         logger.warning("Expected option 'csv_file' in the 'sbhistory' settings")
         return False
 
     current_key = config.sbhistory.csv_file
-    if not current_key or 'enable' not in current_key.keys():
+    if not current_key or "enable" not in current_key.keys():
         logger.error("Missing required 'enable' option in 'csv_file' settings")
         return False
 
@@ -141,7 +142,7 @@ def check_csv_file(config):
         logger.info("csv_file' option is disabled in the 'sbhistory' settings")
         return False
 
-    if 'path' not in current_key.keys():
+    if "path" not in current_key.keys():
         logger.error("Missing required 'path' option in 'csv_file' settings")
         return False
 
@@ -150,14 +151,15 @@ def check_csv_file(config):
 
 class Site:
     """Class to describe a PV site with one or more inverters."""
+
     def __init__(self, session, config):
         """Create a new Site object."""
         self._config = config
         self._influx = InfluxDB()
         self._inverters = []
         for inverter in config.multisma2.inverters:
-            inv = inverter.get('inverter', None)
-            self._inverters.append(Inverter(inv['name'], inv['url'], inv['user'], inv['password'], session))
+            inv = inverter.get("inverter", None)
+            self._inverters.append(Inverter(inv["name"], inv["url"], inv["user"], inv["password"], session))
 
     async def start(self):
         """Initialize the Site object."""
@@ -184,7 +186,9 @@ class Site:
             return
         try:
             start = datetime.datetime.fromisoformat(config.sbhistory.daily_history.start)
-            sma_history_fix_end_date = datetime.date.fromisoformat(config.sbhistory.daily_history.sma_history_fix.target_date)
+            sma_history_fix_end_date = datetime.date.fromisoformat(
+                config.sbhistory.daily_history.sma_history_fix.target_date
+            )
         except Exception as e:
             print(e)
             return
@@ -199,11 +203,16 @@ class Site:
         print(f"Populating daily history values from {start.date()} to {stop.date()}")
 
         await self.start_inverters()
-        inverters = await asyncio.gather(*(inverter.read_history(start=int(start.timestamp()), stop=int(stop.timestamp())) for inverter in self._inverters))
+        inverters = await asyncio.gather(
+            *(
+                inverter.read_history(start=int(start.timestamp()), stop=int(stop.timestamp()))
+                for inverter in self._inverters
+            )
+        )
         await self.stop_inverters()
 
         for inverter in inverters:
-            t = inverter[1]['t']
+            t = inverter[1]["t"]
             dt = datetime.datetime.fromtimestamp(t)
             date = start.date()
             end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
@@ -211,10 +220,10 @@ class Site:
 
             # add missing dates as 0 Wh values
             while date < end_date:
-                print(".", end='', flush=True)
+                print(".", end="", flush=True)
                 newtime = datetime.datetime.combine(date, datetime.time(0, 0))
                 t = int(newtime.timestamp())
-                inverter.append({'t': t, 'v': 0})
+                inverter.append({"t": t, "v": 0})
                 date += delta
 
             # Sort the entries by date
@@ -229,26 +238,26 @@ class Site:
             # normalize times to midnight
             midnight = datetime.time()
             for i in range(1, len(inverter)):
-                t = inverter[i]['t']
-                v = inverter[i]['v']
+                t = inverter[i]["t"]
+                v = inverter[i]["v"]
                 dt = datetime.datetime.fromtimestamp(t)
                 if dt.hour > 12:
                     new_day = dt.date() + datetime.timedelta(days=1)
                     new_dt = datetime.datetime.combine(new_day, midnight)
-                    inverter[i]['t'] = int(new_dt.timestamp())
+                    inverter[i]["t"] = int(new_dt.timestamp())
                 else:
                     new_day = dt.date()
                     new_dt = datetime.datetime.combine(new_day, midnight)
-                    inverter[i]['t'] = int(new_dt.timestamp())
+                    inverter[i]["t"] = int(new_dt.timestamp())
 
-                inverter[i]['midnight'] = 'yes'
+                inverter[i]["midnight"] = "yes"
 
                 if sma_history_fix_end_date:
-                    t = inverter[i]['t']
+                    t = inverter[i]["t"]
                     fix_dt = datetime.datetime.fromtimestamp(t)
                     if fix_dt.date() < sma_history_fix_end_date:
                         fix_dt -= delta
-                        inverter[i]['t'] = int(fix_dt.timestamp())
+                        inverter[i]["t"] = int(fix_dt.timestamp())
                     elif fix_dt.date() == sma_history_fix_end_date:
                         delete_entry = i
 
@@ -261,14 +270,14 @@ class Site:
         for inverter in inverters:
             last_non_null = None
             for i in range(1, len(inverter)):
-                print(".", end='', flush=True)
-                t = inverter[i]['t']
-                v = inverter[i]['v']
+                print(".", end="", flush=True)
+                t = inverter[i]["t"]
+                v = inverter[i]["v"]
                 if v is None:
                     if not last_non_null:
                         continue
                     v = last_non_null
-                    inverter[i]['v'] = last_non_null
+                    inverter[i]["v"] = last_non_null
 
                 total[t] = v + total.get(t, 0)
                 count[t] = count.get(t, 0) + 1
@@ -279,19 +288,19 @@ class Site:
             site_total = []
             for t, v in total.items():
                 if count[t] == len(inverters):
-                    site_total.append({'t': t, 'v': v, 'midnight': 'yes'})
+                    site_total.append({"t": t, "v": v, "midnight": "yes"})
                     # print(f"\nmidnight detected on {t} with meter {v}")
-            site_total.insert(0, {'inverter': 'site'})
+            site_total.insert(0, {"inverter": "site"})
             inverters.append(site_total)
 
-        self._influx.write_history(inverters, 'production/midnight')
+        self._influx.write_history(inverters, "production/midnight")
         print()
 
     # fine production, 5 minute increments
     async def populate_fine_history(self, config):
         if not check_fine_history(config):
             return
-        recent = config.sbhistory.fine_history.start.lower() == 'recent'
+        recent = config.sbhistory.fine_history.start.lower() == "recent"
         try:
             if not recent:
                 date = datetime.date.fromisoformat(config.sbhistory.fine_history.start)
@@ -320,27 +329,32 @@ class Site:
             total = {}
             count = {}
             # await self.start_inverters()
-            inverters = await asyncio.gather(*(inverter.read_fine_history(start=int(start.timestamp()), stop=int(stop.timestamp())) for inverter in self._inverters))
+            inverters = await asyncio.gather(
+                *(
+                    inverter.read_fine_history(start=int(start.timestamp()), stop=int(stop.timestamp()))
+                    for inverter in self._inverters
+                )
+            )
             # await self.stop_inverters()
 
             for inverter in inverters:
-                print(".", end='', flush=True)
+                print(".", end="", flush=True)
                 last_non_null = None
                 for i in range(1, len(inverter)):
-                    t = inverter[i]['t']
-                    v = inverter[i]['v']
+                    t = inverter[i]["t"]
+                    v = inverter[i]["v"]
 
                     # Check for midnight timestamp
                     dt = datetime.datetime.fromtimestamp(t)
                     if dt.hour == 0 and dt.minute == 0:
-                        inverter[i]['midnight'] = 'no'
+                        inverter[i]["midnight"] = "no"
 
                     # Handle any missing data points
                     if v is None:
                         if not last_non_null:
                             continue
                         v = last_non_null
-                        inverter[i]['v'] = last_non_null
+                        inverter[i]["v"] = last_non_null
                     total[t] = v + total.get(t, 0)
                     count[t] = count.get(t, 0) + 1
                     last_non_null = v
@@ -352,15 +366,15 @@ class Site:
                     if count[t] == len(inverters):
                         # Check for midnight timestamp
                         dt = datetime.datetime.fromtimestamp(t)
-                        midnight = 'yes' if dt.hour == 0 and dt.minute == 0 else 'no'
-                        if midnight == 'yes':
+                        midnight = "yes" if dt.hour == 0 and dt.minute == 0 else "no"
+                        if midnight == "yes":
                             # print(f"\nmidnight detected on {t} with meter {v}")
-                            midnight = 'yes'
-                        site_total.append({'t': t, 'v': v, 'midnight': midnight})
-                site_total.insert(0, {'inverter': 'site'})
+                            midnight = "yes"
+                        site_total.append({"t": t, "v": v, "midnight": midnight})
+                site_total.insert(0, {"inverter": "site"})
                 inverters.append(site_total)
 
-            self._influx.write_history(inverters, 'production/total_wh')
+            self._influx.write_history(inverters, "production/total_wh")
             date += delta
 
         await self.stop_inverters()
@@ -375,7 +389,13 @@ class Site:
             solar_properties = config.multisma2.solar_properties
 
             tzinfo = dateutil.tz.gettz(site_properties.tz)
-            siteinfo = LocationInfo(name=site_properties.name, region=site_properties.region, timezone=site_properties.tz, latitude=site_properties.latitude, longitude=site_properties.longitude)
+            siteinfo = LocationInfo(
+                name=site_properties.name,
+                region=site_properties.region,
+                timezone=site_properties.tz,
+                latitude=site_properties.latitude,
+                longitude=site_properties.longitude,
+            )
         except Exception as e:
             print(e)
             return
@@ -387,16 +407,16 @@ class Site:
 
             lp_points = []
             while date < end_date:
-                print(".", end='', flush=True)
+                print(".", end="", flush=True)
                 astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
-                dawn = astral['dawn']
-                dusk = astral['dusk']
+                dawn = astral["dawn"]
+                dusk = astral["dusk"]
                 irradiance = clearsky.global_irradiance(site_properties, solar_properties, dawn, dusk)
                 for point in irradiance:
-                    t = point['t']
-                    v = point['v']
+                    t = point["t"]
+                    v = point["v"]
                     # sample: sun,_type=modeled irradiance=800 1556813561098
-                    lp = f'sun,_type=modeled irradiance={round(v, 1)} {t}'
+                    lp = f"sun,_type=modeled irradiance={round(v, 1)} {t}"
                     lp_points.append(lp)
                 date += delta
 
@@ -424,47 +444,49 @@ class Site:
 
                 csv_indices = {}
                 lp_points = []
-                with open(entry.path, newline='') as csvfile:
+                with open(entry.path, newline="") as csvfile:
                     print(f"Processing file {entry.name}")
-                    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                    reader = csv.reader(csvfile, delimiter=",", quotechar="|")
                     for row in reader:
                         if reader.line_num == 1:
-                            to_find = ['Date', 'Time', 'Tpv', 'Ta', 'Irr', 'Irr Unit', 'Temp Unit']
+                            to_find = ["Date", "Time", "Tpv", "Ta", "Irr", "Irr Unit", "Temp Unit"]
                             for heading in to_find:
                                 index = row.index(heading)
                                 csv_indices[heading] = index
                         else:
-                            irradiance = row[csv_indices['Irr']]
-                            if irradiance.startswith('<'):
-                                irradiance = '0'
+                            irradiance = row[csv_indices["Irr"]]
+                            if irradiance.startswith("<"):
+                                irradiance = "0"
                             irradiance = float(irradiance)
 
-                            date = row[csv_indices['Date']]
-                            date_dmy = date.split('.')
-                            d = datetime.date(year=int('20' + date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0]))
+                            date = row[csv_indices["Date"]]
+                            date_dmy = date.split(".")
+                            d = datetime.date(
+                                year=int("20" + date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0])
+                            )
 
-                            time = row[csv_indices['Time']]
-                            time_hms = time.split(':')
+                            time = row[csv_indices["Time"]]
+                            time_hms = time.split(":")
                             t = datetime.time(hour=int(time_hms[0]), minute=int(time_hms[1]))
                             dt = datetime.datetime.combine(date=d, time=t, tzinfo=tzinfo)
                             ts = int(dt.timestamp())
 
-                            tpv = row[csv_indices['Tpv']]
-                            if tpv == 'ERR':
+                            tpv = row[csv_indices["Tpv"]]
+                            if tpv == "ERR":
                                 tpv = None
-                            ta = row[csv_indices['Ta']]
-                            if ta == 'ERR':
+                            ta = row[csv_indices["Ta"]]
+                            if ta == "ERR":
                                 ta = None
 
                             # sample: sun,_type=measured irradiance=800 1556813561098
-                            lp_points.append(f'sun,_type=measured irradiance={irradiance} {ts}')
+                            lp_points.append(f"sun,_type=measured irradiance={irradiance} {ts}")
                             if tpv:
                                 # sample: sun,_type=working temperature=10 1556813561098
-                                lp_points.append(f'sun,_type=working temperature={float(ta)} {ts}')
+                                lp_points.append(f"sun,_type=working temperature={float(ta)} {ts}")
                             if ta:
                                 # sample: sun,_type=ambient temperature=8 1556813561098
-                                lp_points.append(f'sun,_type=ambient temperature={float(tpv)} {ts}')
-                            print(".", end='', flush=True)
+                                lp_points.append(f"sun,_type=ambient temperature={float(tpv)} {ts}")
+                            print(".", end="", flush=True)
 
                     self._influx.write_points(lp_points)
                     print()

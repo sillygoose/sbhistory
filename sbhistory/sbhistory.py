@@ -16,21 +16,21 @@ import logfiles
 from config import config_from_yaml
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 
-def buildYAMLExceptionString(exception, file='sbhistory'):
+def buildYAMLExceptionString(exception, file="sbhistory"):
     e = exception
     try:
-        type = ''
+        type = ""
         file = file
         line = 0
         column = 0
-        info = ''
+        info = ""
 
         if e.args[0]:
             type = e.args[0]
-            type += ' '
+            type += " "
 
         if e.args[1]:
             file = os.path.basename(e.args[1].name)
@@ -65,10 +65,10 @@ class Multisma2:
         self._session = None
         self._site = None
         try:
-            yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
+            yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sbhistory.yaml")
             self._config = config_from_yaml(data=yaml_file, read_from_file=True)
         except Exception as e:
-            error_message = buildYAMLExceptionString(exception=e, file='sbhistory.yaml')
+            error_message = buildYAMLExceptionString(exception=e, file="sbhistory.yaml")
             print(error_message)
             raise Multisma2.FailedInitialization
 

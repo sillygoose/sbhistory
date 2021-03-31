@@ -12,7 +12,7 @@ import jmespath
 from aiohttp import client_exceptions
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 USERS = {"user": "usr", "installer": "istl"}
 
@@ -36,7 +36,7 @@ class SMA:
             raise KeyError("Invalid user type: {}".format(group))
         if len(password) > 12:
             logger.warning("Password should not exceed 12 characters")
-        self._new_session_data = {'right': USERS[group], 'pass': password}
+        self._new_session_data = {"right": USERS[group], "pass": password}
         self._url = url.rstrip("/")
         if not url.startswith("http"):
             self._url = "http://" + self._url
@@ -69,7 +69,7 @@ class SMA:
         body = await self._fetch_json(url, payload=payload)
 
         # On the first error we close the session which will re-login
-        err = body.get('err')
+        err = body.get("err")
         if err is not None:
             logger.error(
                 f"{self._url}: error detected, closing session to force another login attempt, got: {body}",
@@ -77,16 +77,16 @@ class SMA:
             await self.close_session()
             return None
 
-        if not isinstance(body, dict) or 'result' not in body:
+        if not isinstance(body, dict) or "result" not in body:
             logger.error(f"No 'result' in reply from SMA, got: {body}")
             return None
 
         if self.sma_uid is None:
             # Get the unique ID
-            self.sma_uid = next(iter(body['result'].keys()), None)
+            self.sma_uid = next(iter(body["result"].keys()), None)
 
-        result_body = body['result'].pop(self.sma_uid, None)
-        if body != {'result': {}}:
+        result_body = body["result"].pop(self.sma_uid, None)
+        if body != {"result": {}}:
             logger.error(f"Unexpected body {json.dumps(body)}, extracted {json.dumps(result_body)}")
 
         return result_body
@@ -98,7 +98,7 @@ class SMA:
         if self.sma_sid:
             return True
 
-        err = body.pop('err', None)
+        err = body.pop("err", None)
         msg = "Could not start session, %s, got {}".format(body)
 
         if err:

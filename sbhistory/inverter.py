@@ -4,7 +4,7 @@ import logging
 import sma
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 
 class Inverter:
@@ -39,11 +39,11 @@ class Inverter:
     async def read_history(self, start, stop):
         """Read the baseline inverter production."""
         history = await self._sma.read_history(start, stop)
-        history.insert(0, {'inverter': self._name})
+        history.insert(0, {"inverter": self._name})
         return history
 
     async def read_fine_history(self, start, stop):
         """Read the baseline inverter production."""
         history = await self._sma.read_fine_history(start, stop)
-        history.insert(0, {'inverter': self._name})
+        history.insert(0, {"inverter": self._name})
         return history

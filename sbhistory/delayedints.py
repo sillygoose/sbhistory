@@ -8,16 +8,16 @@ import signal
 import logging
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 
 __all__ = [
-    'SIGNAL_TRANSLATION_MAP',
+    "SIGNAL_TRANSLATION_MAP",
 ]
 
 SIGNAL_TRANSLATION_MAP = {
-    signal.SIGINT: 'SIGINT',
-    signal.SIGTERM: 'SIGTERM',
+    signal.SIGINT: "SIGINT",
+    signal.SIGTERM: "SIGTERM",
 }
 
 
@@ -45,8 +45,7 @@ class DelayedKeyboardInterrupt:
 
     def __enter__(self):
         self._old_signal_handler_map = {
-            sig: signal.signal(sig, self._handler)
-            for sig, _ in SIGNAL_TRANSLATION_MAP.items()
+            sig: signal.signal(sig, self._handler) for sig, _ in SIGNAL_TRANSLATION_MAP.items()
         }
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -65,7 +64,9 @@ class DelayedKeyboardInterrupt:
         # Protection against fork.
         if os.getpid() != self._pid:
             if self._propagate_to_forked_processes is False:
-                logger.info(f"{SIGNAL_TRANSLATION_MAP[sig]} received; PID mismatch: {os.getpid()}, {self._pid}, calling original handler")
+                logger.info(
+                    f"{SIGNAL_TRANSLATION_MAP[sig]} received; PID mismatch: {os.getpid()}, {self._pid}, calling original handler"
+                )
                 self._old_signal_handler_map[self._sig](self._sig, self._frame)
             elif self._propagate_to_forked_processes is None:
                 logger.info(f"{SIGNAL_TRANSLATION_MAP[sig]} received; PID mismatch: {os.getpid()}, ignoring the signal")

@@ -8,7 +8,6 @@ pyproject.toml
 
 # Ignore local dirs
 backup/
-data/
 log/
 
 # Ignore MacOS files

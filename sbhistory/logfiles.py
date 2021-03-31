@@ -6,7 +6,7 @@ import logging
 from datetime import datetime
 
 
-logger = logging.getLogger('sbhistory')
+logger = logging.getLogger("sbhistory")
 
 LOGGING_VAR = {}
 
@@ -14,6 +14,7 @@ LOGGING_VAR = {}
 #
 # Public
 #
+
 
 def stop():
     """Closes open log files."""
@@ -26,9 +27,7 @@ def stop():
 def create_application_log(app_logger, config):
     """Create the application log."""
     now = datetime.now()
-    filename = os.path.expanduser(
-        config.sbhistory.log.file + "_" + now.strftime("%Y-%m-%d") + ".log"
-    )
+    filename = os.path.expanduser(config.sbhistory.log.file + "_" + now.strftime("%Y-%m-%d") + ".log")
 
     # Create the directory if needed
     filename_parts = os.path.split(filename)
