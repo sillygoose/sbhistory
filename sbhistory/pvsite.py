@@ -25,131 +25,6 @@ def diff_month(d1, d2):
     return (d1.year - d2.year) * 12 + d1.month - d2.month
 
 
-def check_daily_history(config):
-    current_key = config.sbhistory
-    if not current_key or "daily_history" not in current_key.keys():
-        logger.warning("Expected option 'daily_history' in the 'sbhistory' settings")
-        return False
-
-    current_key = config.sbhistory.daily_history
-    if not current_key or "enable" not in current_key.keys():
-        logger.error("Missing required 'enable' option in 'daily_history' settings")
-        return False
-
-    if not current_key.enable:
-        logger.warning("daily_history' option is disabled in the 'sbhistory' settings")
-        return False
-
-    if "start" not in current_key.keys():
-        logger.error("Missing required 'start' option in 'daily_history' settings")
-        return False
-
-    if "sma_history_fix" in current_key.keys():
-        current_key = config.sbhistory.daily_history.sma_history_fix
-        if not current_key or "enable" not in current_key.keys():
-            logger.error("Missing required 'enable' option in 'sma_history_fix' settings")
-            return False
-
-        if not current_key.enable:
-            logger.info("sma_history_fix' option is disabled in the 'sbhistory' settings")
-        elif "target_date" not in current_key.keys():
-            logger.error("Missing required 'target_date' option in YAML file when 'enable' is True")
-            return False
-
-    return True
-
-
-def check_fine_history(config):
-    current_key = config.sbhistory
-    if not current_key or "fine_history" not in current_key.keys():
-        logger.warning("Expected option 'fine_history' in the 'sbhistory' settings")
-        return False
-
-    current_key = config.sbhistory.fine_history
-    if not current_key or "enable" not in current_key.keys():
-        logger.error("Missing required 'enable' option in 'fine_history' settings")
-        return False
-
-    if not current_key.enable:
-        logger.info("fine_history' option is disabled in the 'sbhistory' settings")
-        return False
-
-    if "start" not in current_key.keys():
-        logger.error("Missing required 'start' option in 'fine_history' settings")
-        return False
-
-    return True
-
-
-def check_irradiance(config):
-    current_key = config.sbhistory
-    if not current_key or "irradiance" not in current_key.keys():
-        logger.warning("Expected option 'irradiance' in the 'sbhistory' settings")
-        return False
-
-    current_key = config.sbhistory.irradiance
-    if not current_key or "enable" not in current_key.keys():
-        logger.error("Missing required 'enable' option in 'irradiance' settings")
-        return False
-
-    if not current_key.enable:
-        logger.info("irradiance' option is disabled in the 'sbhistory' settings")
-        return False
-
-    if "start" not in current_key.keys():
-        logger.error("Missing required 'start' option in 'irradiance' settings")
-        return False
-
-    current_key = config.multisma2
-    if not current_key:
-        logger.error("Missing required 'multisma2' section in YAML file settings")
-        return False
-
-    keys = ["site", "solar_properties"]
-    for key in keys:
-        if key not in current_key.keys():
-            logger.error(f"Missing required '{key}' option in 'multisma2' settings")
-            return False
-
-    current_key = config.multisma2.site
-    keys = ["name", "region", "tz", "latitude", "longitude"]
-    for key in keys:
-        if key not in current_key.keys():
-            logger.error(f"Missing required '{key}' option in 'multisma2.site' settings")
-            return False
-
-    current_key = config.multisma2.solar_properties
-    keys = ["tilt", "area"]
-    for key in keys:
-        if key not in current_key.keys():
-            logger.error(f"Missing required '{key}' option in 'multisma2.solar_properties' settings")
-            return False
-
-    return True
-
-
-def check_csv_file(config):
-    current_key = config.sbhistory
-    if not current_key or "csv_file" not in current_key.keys():
-        logger.warning("Expected option 'csv_file' in the 'sbhistory' settings")
-        return False
-
-    current_key = config.sbhistory.csv_file
-    if not current_key or "enable" not in current_key.keys():
-        logger.error("Missing required 'enable' option in 'csv_file' settings")
-        return False
-
-    if not current_key.enable:
-        logger.info("csv_file' option is disabled in the 'sbhistory' settings")
-        return False
-
-    if "path" not in current_key.keys():
-        logger.error("Missing required 'path' option in 'csv_file' settings")
-        return False
-
-    return True
-
-
 class Site:
     """Class to describe a PV site with one or more inverters."""
 
@@ -183,13 +58,10 @@ class Site:
 
     # daily totals, day increments
     async def populate_daily_history(self, config):
-        if not check_daily_history(config):
+        if not config.sbhistory.daily_history.enable:
             return
         try:
             start = datetime.datetime.fromisoformat(config.sbhistory.daily_history.start)
-            sma_history_fix_end_date = datetime.date.fromisoformat(
-                config.sbhistory.daily_history.sma_history_fix.target_date
-            )
         except Exception as e:
             print(e)
             return
@@ -253,18 +125,6 @@ class Site:
 
                 inverter[i]["midnight"] = "yes"
 
-                if sma_history_fix_end_date:
-                    t = inverter[i]["t"]
-                    fix_dt = datetime.datetime.fromtimestamp(t)
-                    if fix_dt.date() < sma_history_fix_end_date:
-                        fix_dt -= delta
-                        inverter[i]["t"] = int(fix_dt.timestamp())
-                    elif fix_dt.date() == sma_history_fix_end_date:
-                        delete_entry = i
-
-            if sma_history_fix_end_date:
-                del inverter[delete_entry]
-
         # Calculate the total
         total = {}
         count = {}
@@ -299,7 +159,7 @@ class Site:
 
     # fine production, 5 minute increments
     async def populate_fine_history(self, config):
-        if not check_fine_history(config):
+        if not config.sbhistory.fine_history.enable:
             return
         recent = config.sbhistory.fine_history.start.lower() == "recent"
         try:
@@ -382,7 +242,7 @@ class Site:
         print()
 
     async def populate_irradiance(self, config):
-        if not check_irradiance(config):
+        if not config.sbhistory.irradiance.enable:
             return
         try:
             date = datetime.datetime.fromisoformat(config.sbhistory.irradiance.start)
@@ -427,7 +287,7 @@ class Site:
             logger.error(f"An exception occurred in populate_irradiance(): {e}")
 
     async def populate_csv_file(self, config):
-        if not check_csv_file(config):
+        if not config.sbhistory.csv_file.enable:
             return
         try:
             site_properties = config.multisma2.site

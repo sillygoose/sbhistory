@@ -13,7 +13,7 @@ from delayedints import DelayedKeyboardInterrupt
 from pvsite import Site
 import version
 import logfiles
-from config import config_from_yaml
+from readconfig import read_config
 
 
 logger = logging.getLogger("sbhistory")
@@ -60,17 +60,11 @@ class Multisma2:
     class FailedInitialization(Exception):
         pass
 
-    def __init__(self):
+    def __init__(self, config):
+        self._config = config
         self._loop = asyncio.new_event_loop()
         self._session = None
         self._site = None
-        try:
-            yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sbhistory.yaml")
-            self._config = config_from_yaml(data=yaml_file, read_from_file=True)
-        except Exception as e:
-            error_message = buildYAMLExceptionString(exception=e, file="sbhistory.yaml")
-            print(error_message)
-            raise Multisma2.FailedInitialization
 
     def run(self):
         try:
@@ -123,9 +117,15 @@ class Multisma2:
 
 
 def main():
-    """Set up and start multisma2."""
+    """Set up and start sbhistory."""
+
+    config = read_config()
+    if not config:
+        print("Error processing YAML configuration - exiting")
+        return
+
     try:
-        multisma2 = Multisma2()
+        multisma2 = Multisma2(config)
         multisma2.run()
     except Multisma2.FailedInitialization:
         pass

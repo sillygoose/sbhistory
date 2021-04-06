@@ -1,5 +1,5 @@
 # ignore the configuration file
-sbhistory.yaml
+secrets.yaml
 
 # Python files
 tox.ini
