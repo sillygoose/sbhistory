@@ -1,12 +1,13 @@
 """Code to interface with the SMA inverters and return state or history."""
 
+import os
 import asyncio
 import logging
 import dateutil
 import datetime
+
 import clearsky
 import csv
-import os
 
 # from pprint import pprint
 
