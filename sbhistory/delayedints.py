@@ -8,7 +8,7 @@ import signal
 import logging
 
 
-logger = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger("sbhistory")
 
 
 __all__ = [
@@ -64,14 +64,16 @@ class DelayedKeyboardInterrupt:
         # Protection against fork.
         if os.getpid() != self._pid:
             if self._propagate_to_forked_processes is False:
-                logger.info(
+                _LOGGER.info(
                     f"{SIGNAL_TRANSLATION_MAP[sig]} received; PID mismatch: {os.getpid()}, {self._pid}, calling original handler"
                 )
                 self._old_signal_handler_map[self._sig](self._sig, self._frame)
             elif self._propagate_to_forked_processes is None:
-                logger.info(f"{SIGNAL_TRANSLATION_MAP[sig]} received; PID mismatch: {os.getpid()}, ignoring the signal")
+                _LOGGER.info(
+                    f"{SIGNAL_TRANSLATION_MAP[sig]} received; PID mismatch: {os.getpid()}, ignoring the signal"
+                )
                 return
             # elif self._propagate_to_forked_processes is True:
             #   ... passthrough
 
-        logger.info(f"{SIGNAL_TRANSLATION_MAP[sig]} received; delaying KeyboardInterrupt")
+        _LOGGER.info(f"{SIGNAL_TRANSLATION_MAP[sig]} received; delaying KeyboardInterrupt")

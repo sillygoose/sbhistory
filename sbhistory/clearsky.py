@@ -17,7 +17,7 @@ from astral.sun import sun
 from astral import LocationInfo
 
 
-logger = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger("sbhistory")
 
 
 def current_global_irradiance(site_properties, solar_properties, timestamp):

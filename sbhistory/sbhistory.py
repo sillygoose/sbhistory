@@ -16,41 +16,7 @@ import logfiles
 from readconfig import read_config
 
 
-logger = logging.getLogger("sbhistory")
-
-
-def buildYAMLExceptionString(exception, file="sbhistory"):
-    e = exception
-    try:
-        type = ""
-        file = file
-        line = 0
-        column = 0
-        info = ""
-
-        if e.args[0]:
-            type = e.args[0]
-            type += " "
-
-        if e.args[1]:
-            file = os.path.basename(e.args[1].name)
-            line = e.args[1].line
-            column = e.args[1].column
-
-        if e.args[2]:
-            info = os.path.basename(e.args[2])
-
-        if e.args[3]:
-            file = os.path.basename(e.args[3].name)
-            line = e.args[3].line
-            column = e.args[3].column
-
-        errmsg = f"YAML file error {type}in {file}:{line}, column {column}: {info}"
-
-    except Exception:
-        errmsg = "YAML file error and no idea how it is encoded."
-
-    return errmsg
+_LOGGER = logging.getLogger("sbhistory")
 
 
 class Multisma2:
@@ -72,7 +38,7 @@ class Multisma2:
                 with DelayedKeyboardInterrupt():
                     self._start()
             except KeyboardInterrupt:
-                logger.critical("Received KeyboardInterrupt during startup")
+                _LOGGER.critical("Received KeyboardInterrupt during startup")
                 raise
 
             self._wait()
@@ -84,12 +50,9 @@ class Multisma2:
                 with DelayedKeyboardInterrupt():
                     self._stop()
             except KeyboardInterrupt:
-                logger.critical("Received KeyboardInterrupt during shutdown")
+                _LOGGER.critical("Received KeyboardInterrupt during shutdown")
 
     async def _astart(self):
-        logfiles.create_application_log(logger, self._config)
-        logger.info(f"multisma2 inverter production history utility {version.get_version()}")
-
         self._session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
         self._site = Site(self._session, self._config)
         result = await self._site.start()
@@ -119,9 +82,12 @@ class Multisma2:
 def main():
     """Set up and start sbhistory."""
 
+    logfiles.create_application_log(_LOGGER)
+    _LOGGER.info(f"sbhistory - Sunny Boy inverter production history utility {version.get_version()}")
+
     config = read_config()
     if not config:
-        print("Error processing YAML configuration - exiting")
+        _LOGGER.error("Error processing YAML configuration - exiting")
         return
 
     try:
@@ -130,7 +96,7 @@ def main():
     except Multisma2.FailedInitialization:
         pass
     except Exception as e:
-        print(f"Unexpected exception: {e}")
+        _LOGGER.error(f"Unexpected exception: {e}")
 
 
 if __name__ == "__main__":

@@ -10,27 +10,22 @@ sbhistory:
   #   - irradiance_history is an estimate of local irradiation (W)
   #   - csv_file imports Seaboard meter CSV irradiance files
   daily_history:
-    enable: False
+    enable: True
     start: '2021-04-01'
 
   # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
-    enable: False
+    enable: True
     start: 'recent'
     #start:  '2021-04-01'
 
   irradiance:
-    enable: False
+    enable: True
     start:  '2021-04-01'
 
   csv_file:
-    enable: False
+    enable: True
     path:   '/Users/sillygoose/Documents/Parker Lane/Solar/seaward'
-
-  # Application log file customization
-  log:
-    file:   'log/sbhistory'
-    format: '[%(asctime)s] [%(module)s] [%(levelname)s] %(message)s'
 
 
 multisma2:

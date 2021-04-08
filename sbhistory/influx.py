@@ -11,7 +11,7 @@ from influxdb_client import InfluxDBClient, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 
-logger = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger("sbhistory")
 
 LP_LOOKUP = {
     "ac_measurements/power": {"measurement": "ac_measurements", "tag": "_inverter", "field": "power"},
@@ -43,22 +43,22 @@ class InfluxDB:
         required_keys = ["url", "token", "bucket", "org"]
         for key in required_keys:
             if key not in config.keys():
-                logger.error(f"Missing required 'influxdb2' option in YAML file: '{key}'")
+                _LOGGER.error(f"Missing required 'influxdb2' option in YAML file: '{key}'")
                 return False
         return True
 
     def start(self, config):
         key = "enable"
         if key not in config.keys():
-            logger.error(f"Missing required 'influxdb2' option in YAML file: '{key}'")
+            _LOGGER.error(f"Missing required 'influxdb2' option in YAML file: '{key}'")
             return False
 
         if not isinstance(config.enable, bool):
-            logger.error(f"The influxdb 'enable' option is not a boolean '{config.enable}'")
+            _LOGGER.error(f"The influxdb 'enable' option is not a boolean '{config.enable}'")
             return False
 
         if not config.enable:
-            logger.error(f"The influxdb 'enable' option must be enabled to use 'sbhistory': '{config.enable}'")
+            _LOGGER.error(f"The influxdb 'enable' option must be enabled to use 'sbhistory': '{config.enable}'")
             return False
 
         if self.check_config(config) is False:
@@ -67,28 +67,28 @@ class InfluxDB:
         self._bucket = config.bucket
         self._client = InfluxDBClient(url=config.url, token=config.token, org=config.org)
         if not self._client:
-            logger.error(
+            _LOGGER.error(
                 f"Failed to get InfluxDBClient object from {config.url} (check your url, token, and/or organization)"
             )
             return False
         self._write_api = self._client.write_api(write_options=SYNCHRONOUS)
         if not self._write_api:
-            logger.error(f"Failed to get client write_api() object from {config.url}")
+            _LOGGER.error(f"Failed to get client write_api() object from {config.url}")
             return False
         self._delete_api = self._client.delete_api()
         if not self._delete_api:
-            logger.error(f"Failed to get client delete_api() object from {config.url}")
+            _LOGGER.error(f"Failed to get client delete_api() object from {config.url}")
             return False
         self._query_api = self._client.query_api()
         if not self._query_api:
-            logger.error(f"Failed to get client query_api() object from {config.url}")
+            _LOGGER.error(f"Failed to get client query_api() object from {config.url}")
             return False
         try:
             self._query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
-            logger.info(f"Connected to the InfluxDB database at {config.url}, bucket '{self._bucket}'")
+            _LOGGER.info(f"Connected to the InfluxDB database at {config.url}, bucket '{self._bucket}'")
             return True
         except Exception:
-            logger.error(f"Unable to access bucket '{self._bucket}' at {config.url}")
+            _LOGGER.error(f"Unable to access bucket '{self._bucket}' at {config.url}")
         return False
 
     def stop(self):
@@ -99,7 +99,7 @@ class InfluxDB:
             bucket = self._bucket
             self._client.close()
             self._client = None
-            logger.info(f"Closed the InfluxDB bucket '{bucket}'")
+            _LOGGER.info(f"Closed the InfluxDB bucket '{bucket}'")
 
     def write_points(self, points):
         if not self._write_api:
@@ -108,7 +108,7 @@ class InfluxDB:
             self._write_api.write(bucket=self._bucket, record=points, write_precision=WritePrecision.S)
             result = True
         except Exception as e:
-            logger.error(f"Database write_points() call failed in write_points(): {e}")
+            _LOGGER.error(f"Database write_points() call failed in write_points(): {e}")
             result = False
         return result
 
@@ -117,7 +117,7 @@ class InfluxDB:
             self._query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
             return True
         except Exception:
-            logger.error(f"Unable to query from '{self._bucket}'")
+            _LOGGER.error(f"Unable to query from '{self._bucket}'")
         return False
 
     def write_history(self, site, topic):
@@ -127,7 +127,7 @@ class InfluxDB:
 
         lookup = LP_LOOKUP.get(topic, None)
         if not lookup:
-            logger.error(f"write_history(): unknown topic '{topic}'")
+            _LOGGER.error(f"write_history(): unknown topic '{topic}'")
             return result
 
         measurement = lookup.get("measurement")
@@ -142,13 +142,13 @@ class InfluxDB:
                 v = history["v"]
                 midnight = history.get("midnight", "no")
                 if v is None:
-                    # logger.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
+                    # _LOGGER.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
                     continue
                 elif isinstance(v, int):
                     lp = f"{measurement},{tag}={name},_midnight={midnight} {field}={v}i {t}"
                     lps.append(lp)
                 else:
-                    logger.error(
+                    _LOGGER.error(
                         f"write_history(): unanticipated type '{type(v)}' in measurement '{measurement}/{field}'"
                     )
                     continue
@@ -157,7 +157,7 @@ class InfluxDB:
             self._write_api.write(bucket=self._bucket, record=lps, write_precision=WritePrecision.S)
             result = True
         except Exception as e:
-            logger.error(f"Database write_points() call failed in write_history(): {e}")
+            _LOGGER.error(f"Database write_points() call failed in write_history(): {e}")
         return result
 
 

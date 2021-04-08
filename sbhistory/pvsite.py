@@ -18,7 +18,7 @@ from astral.sun import sun
 from astral import LocationInfo
 
 
-logger = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger("sbhistory")
 
 
 def diff_month(d1, d2):
@@ -73,7 +73,7 @@ class Site:
         start = start - td
         stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
         stop += od
-        print(f"Populating daily history values from {start.date()} to {stop.date()}")
+        _LOGGER.info(f"Populating daily history values from {start.date()} to {stop.date()}")
 
         await self.start_inverters()
         inverters = await asyncio.gather(
@@ -174,9 +174,9 @@ class Site:
         delta = datetime.timedelta(days=1)
         end_date = datetime.date.today() + delta
         if recent:
-            print("Populating some recent total_wh values")
+            _LOGGER.info("Populating some recent total_wh values")
         else:
-            print(f"Populating fine history values from {date} to {end_date}")
+            _LOGGER.info(f"Populating fine history values from {date} to {end_date}")
 
         await self.start_inverters()
         while date < end_date:
@@ -264,7 +264,7 @@ class Site:
         try:
             delta = datetime.timedelta(days=1)
             end_date = datetime.datetime.today() + delta
-            print(f"Populating irradiance values from {date.date()} to {end_date.date()}")
+            _LOGGER.info(f"Populating irradiance values from {date.date()} to {end_date.date()}")
 
             lp_points = []
             while date < end_date:
@@ -284,7 +284,7 @@ class Site:
             self._influx.write_points(lp_points)
             print()
         except Exception as e:
-            logger.error(f"An exception occurred in populate_irradiance(): {e}")
+            _LOGGER.error(f"An exception occurred in populate_irradiance(): {e}")
 
     async def populate_csv_file(self, config):
         if not config.sbhistory.csv_file.enable:
@@ -306,7 +306,7 @@ class Site:
                 csv_indices = {}
                 lp_points = []
                 with open(entry.path, newline="") as csvfile:
-                    print(f"Processing file {entry.name}")
+                    _LOGGER.info(f"Processing file {entry.name}")
                     reader = csv.reader(csvfile, delimiter=",", quotechar="|")
                     for row in reader:
                         if reader.line_num == 1:
@@ -354,7 +354,7 @@ class Site:
 
         except Exception as e:
             print()
-            logger.error(f"An error occurred in {entry.name}, line {reader.line_num}: {e}")
+            _LOGGER.error(f"An error occurred in {entry.name}, line {reader.line_num}: {e}")
         print()
 
     async def run(self):

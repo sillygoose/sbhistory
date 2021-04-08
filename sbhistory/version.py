@@ -33,7 +33,7 @@ def get_version():
     current_dir = os.getcwd()
     app_path = Path(dirname(__file__))
     os.chdir(app_path)
-    print(app_path.parent)
+    # print(app_path.parent)
     if isdir(join(app_path.parent, ".git")):
         # Get the version using "git describe".
         cmd = "git describe --tags --match [0-9]*".split()

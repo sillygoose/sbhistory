@@ -71,18 +71,10 @@ def _load_secret_yaml(secret_path: str) -> JSON_TYPE:
         secrets = load_yaml(secret_path)
         if not isinstance(secrets, dict):
             raise ConfigError("Secrets is not a dictionary")
-        if "logger" in secrets:
-            logger = str(secrets["logger"]).lower()
-            if logger == "debug":
-                _LOGGER.setLevel(logging.DEBUG)
-            else:
-                _LOGGER.error(
-                    "secrets.yaml: 'logger: debug' expected, but 'logger: %s' found",
-                    logger,
-                )
-            del secrets["logger"]
+
     except FileNotFoundError:
         secrets = {}
+
     __SECRET_CACHE[secret_path] = secrets
     return secrets
 
