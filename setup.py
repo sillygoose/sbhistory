@@ -18,14 +18,10 @@ setup(
     author="Rick Naro",
     author_email="sillygoose@me.com",
     license="MIT",
-    setup_requires=[
-        "flake8",
-    ],
     install_requires=[
         "aiohttp",
         "asyncio",
         "async_timeout",
-        "csv",
         "jmespath",
         "influxdb-client",
         "paho-mqtt",
