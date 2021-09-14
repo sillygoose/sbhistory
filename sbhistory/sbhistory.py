@@ -4,7 +4,6 @@
 
 import logging
 import sys
-import os
 
 import asyncio
 import aiohttp
@@ -101,7 +100,7 @@ def main():
 
 if __name__ == "__main__":
     # make sure we can run multisma2
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 7:
+    if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
         main()
     else:
-        print("python 3.7 or better required")
+        print("python 3.9 or better required")
