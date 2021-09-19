@@ -34,8 +34,8 @@ class Site:
         self._influx = InfluxDB()
         self._inverters = []
         for inverter in config.multisma2.inverters:
-            inv = inverter.get("inverter", None)
-            self._inverters.append(Inverter(inv["name"], inv["url"], inv["user"], inv["password"], session))
+            inv = inverter.get('inverter', None)
+            self._inverters.append(Inverter(inv['name'], inv['url'], inv['username'], inv['password'], session))
 
     async def start(self):
         """Initialize the Site object."""

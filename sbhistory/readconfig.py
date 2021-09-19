@@ -4,14 +4,16 @@ import logging
 import os
 import sys
 
+from config.configuration import Configuration
 from dateutil.parser import parse
 from pathlib import Path
+import yaml
+from config import config_from_yaml
 
 from collections import OrderedDict
 from typing import Dict, List, TextIO, TypeVar, Union
 
-import yaml
-from config import config_from_yaml
+from exceptions import FailedInitialization
 
 
 CONFIG_YAML = "sbhistory.yaml"
@@ -22,6 +24,40 @@ DICT_T = TypeVar("DICT_T", bound=Dict)  # pylint: disable=invalid-name
 
 _LOGGER = logging.getLogger("sbhistory")
 __SECRET_CACHE: Dict[str, JSON_TYPE] = {}
+
+
+def buildYAMLExceptionString(exception, file='multisma2'):
+    e = exception
+    try:
+        type = ''
+        file = file
+        line = 0
+        column = 0
+        info = ''
+
+        if e.args[0]:
+            type = e.args[0]
+            type += ' '
+
+        if e.args[1]:
+            file = os.path.basename(e.args[1].name)
+            line = e.args[1].line
+            column = e.args[1].column
+
+        if e.args[2]:
+            info = os.path.basename(e.args[2])
+
+        if e.args[3]:
+            file = os.path.basename(e.args[3].name)
+            line = e.args[3].line
+            column = e.args[3].column
+
+        errmsg = f"YAML file error {type}in {file}:{line}, column {column}: {info}"
+
+    except Exception:
+        errmsg = f"YAML file error and no idea how it is encoded."
+
+    return errmsg
 
 
 class ConfigError(Exception):
@@ -106,177 +142,205 @@ def secret_yaml(loader: FullLineLoader, node: yaml.nodes.Node) -> JSON_TYPE:
     raise ConfigError(f"Secret '{node.value}' not defined")
 
 
-def check_daily_history(config):
-    options = {}
-    sbhistory_key = config.sbhistory
-    if not sbhistory_key or "daily_history" not in sbhistory_key.keys():
-        _LOGGER.warning("Expected option 'daily_history' in the 'sbhistory' settings")
-        return None
+def check_required_keys(yaml, required, path='') -> bool:
+    passed = True
 
-    daily_history_key = sbhistory_key.daily_history
-    if not daily_history_key or "enable" not in daily_history_key.keys():
-        _LOGGER.error("Missing required 'enable' option in 'daily_history' settings")
-        return None
+    for keywords in required:
+        for rk, rv in keywords.items():
+            currentpath = path + rk if path == '' else path + '.' + rk
 
-    if isinstance(daily_history_key.enable, bool):
-        if not daily_history_key.get("enable"):
-            _LOGGER.info("'daily_history' option is disabled in the 'sbhistory' settings")
+            requiredKey = rv.get('required')
+            requiredSubkeys = rv.get('keys')
+            keyType = rv.get('type', None)
+            typeStr = '' if not keyType else f" (type is '{keyType.__name__}')"
+            requiredStr = 'is required for operation' if requiredKey else ''
+
+            if not yaml:
+                raise FailedInitialization(
+                    Exception(f"YAML file is corrupt or truncated, expecting to find '{rk}' and found nothing"))
+
+            if isinstance(yaml, list):
+                for index, element in enumerate(yaml):
+                    path = f"{currentpath}[{index}]"
+                    yamlKeys = element.keys()
+                    if rk not in yamlKeys:
+                        _LOGGER.error(f"'{currentpath}' {requiredStr}{typeStr}")
+                        continue
+
+                    yamlDict = dict(element)
+                    yamlValue = yamlDict.get(rk, None)
+                    if keyType and not isinstance(yamlValue, keyType):
+                        _LOGGER.error(f"'{currentpath}' should be type '{keyType.__name__}'")
+
+                    if isinstance(requiredSubkeys, list):
+                        passed = check_required_keys(yamlValue, requiredSubkeys, path) and passed
+                    else:
+                        raise FailedInitialization(Exception('Unexpected YAML checking error'))
+            elif isinstance(yaml, dict) or isinstance(yaml, Configuration):
+                yamlKeys = yaml.keys()
+                if rk not in yamlKeys:
+                    _LOGGER.error(f"'{currentpath}' {requiredStr}{typeStr}")
+                    continue
+
+                yamlDict = dict(yaml)
+                yamlValue = yamlDict.get(rk, None)
+                if keyType and not isinstance(yamlValue, keyType):
+                    _LOGGER.error(f"'{currentpath}' should be type '{keyType.__name__}'")
+
+                if isinstance(requiredSubkeys, list):
+                    passed = check_required_keys(yamlValue, requiredSubkeys, currentpath) and passed
+                else:
+                    raise FailedInitialization(Exception('Unexpected YAML checking error'))
+            else:
+                raise FailedInitialization(Exception('Unexpected YAML checking error'))
+    return passed
+
+
+def check_unsupported(yaml, required, path=''):
+    passed = True
+
+    if not yaml:
+        raise FailedInitialization(Exception(f"YAML file is corrupt or truncated, nothong left to parse"))
+
+    if isinstance(yaml, list):
+        for index, element in enumerate(yaml):
+            for yk in element.keys():
+                listpath = f"{path}.{yk}[{index}]"
+
+                yamlValue = dict(element).get(yk, None)
+                for rk in required:
+                    supportedSubkeys = rk.get(yk, None)
+                    if supportedSubkeys:
+                        break
+                if not supportedSubkeys:
+                    _LOGGER.info(f"'{listpath}' option is unsupported")
+                    return
+
+                subkeyList = supportedSubkeys.get('keys', None)
+                if subkeyList:
+                    passed = check_unsupported(yamlValue, subkeyList, listpath) and passed
+    elif isinstance(yaml, dict) or isinstance(yaml, Configuration):
+        for yk in yaml.keys():
+            currentpath = path + yk if path == '' else path + '.' + yk
+
+            yamlValue = dict(yaml).get(yk, None)
+            for rk in required:
+                supportedSubkeys = rk.get(yk, None)
+                if supportedSubkeys:
+                    break
+            if not supportedSubkeys:
+                _LOGGER.info(f"'{currentpath}' option is unsupported")
+                return
+
+            subkeyList = supportedSubkeys.get('keys', None)
+            if subkeyList:
+                passed = check_unsupported(yamlValue, subkeyList, currentpath) and passed
+
     else:
-        _LOGGER.error("'enable' option in 'daily_history' settings must be a boolean")
-        return None
-
-    if "start" not in daily_history_key.keys():
-        _LOGGER.error("Missing required 'start' option in 'daily_history' settings")
-        return None
-
-    try:
-        parse(daily_history_key.start)
-    except ValueError:
-        _LOGGER.error("Incorrect date format in 'daily_history' settings, should be YYYY-MM-DD")
-        return None
-
-    options["enable"] = daily_history_key.enable
-    options["start"] = daily_history_key.start
-    return options
+        raise FailedInitialization(Exception('Unexpected YAML checking error'))
+    return passed
 
 
-def check_fine_history(config):
-    options = {}
-    sbhistory_key = config.sbhistory
-    if not sbhistory_key or "fine_history" not in sbhistory_key.keys():
-        _LOGGER.warning("Expected option 'fine_history' in the 'sbhistory' settings")
-        return None
+def check_config(config):
+    """Check that the important options are present and unknown options aren't."""
 
-    fine_history_key = sbhistory_key.fine_history
-    if not fine_history_key or "enable" not in fine_history_key.keys():
-        _LOGGER.error("Missing required 'enable' option in 'fine_history' settings")
-        return None
-
-    if isinstance(fine_history_key.enable, bool):
-        if not fine_history_key.get("enable"):
-            _LOGGER.info("'fine_history' option is disabled in the 'sbhistory' settings")
-    else:
-        _LOGGER.error("'enable' option in 'fine_history' settings must be a boolean")
-        return None
-
-    if "start" not in fine_history_key.keys():
-        _LOGGER.error("Missing required 'start' option in 'fine_history' settings")
-        return None
-
-    if fine_history_key.start == "recent":
-        pass
-    else:
-        try:
-            parse(fine_history_key.start)
-        except ValueError:
-            _LOGGER.error("Incorrect date format in 'fine_history' settings, should be YYYY-MM-DD")
-            return None
-
-    options["enable"] = fine_history_key.enable
-    options["start"] = fine_history_key.start
-    return options
-
-
-def check_irradiance(config):
-    options = {}
-    sbhistory_key = config.sbhistory
-    if not sbhistory_key or "irradiance" not in sbhistory_key.keys():
-        _LOGGER.warning("Expected option 'irradiance' in the 'sbhistory' settings")
-        return None
-
-    irradiance_key = sbhistory_key.irradiance
-    if not irradiance_key or "enable" not in irradiance_key.keys():
-        _LOGGER.error("Missing required 'enable' option in 'irradiance' settings")
-        return None
-
-    if isinstance(irradiance_key.enable, bool):
-        if not irradiance_key.enable:
-            _LOGGER.info("'irradiance' option is disabled in the 'sbhistory' settings")
-    else:
-        _LOGGER.error("'enable' option in 'irradiance' settings must be a boolean")
-        return None
-
-    options["enable"] = irradiance_key.enable
-    if "start" not in irradiance_key.keys():
-        _LOGGER.error("Missing required 'start' option in 'irradiance' settings")
-        return None
-
-    try:
-        parse(irradiance_key.start)
-    except ValueError:
-        _LOGGER.error("Incorrect date format in 'irradiance' settings, should be YYYY-MM-DD")
-        return None
-
-    multisma2_key = config.multisma2
-    if not multisma2_key:
-        _LOGGER.error("Missing required 'multisma2' section in YAML file settings")
-        return None
-
-    keys = ["site", "solar_properties"]
-    for key in keys:
-        if key not in multisma2_key.keys():
-            _LOGGER.error(f"Missing required '{key}' option in 'multisma2' settings")
-            return None
-
-    site_key = multisma2_key.site
-    keys = ["name", "region", "tz", "latitude", "longitude"]
-    for key in keys:
-        if key not in site_key.keys():
-            _LOGGER.error(f"Missing required '{key}' option in 'multisma2.site' settings")
-            return None
-        options[key] = site_key.get(key)
-
-    solar_properties_key = multisma2_key.solar_properties
-    keys = ["tilt", "area"]
-    for key in keys:
-        if key not in solar_properties_key.keys():
-            _LOGGER.error(f"Missing required '{key}' option in 'multisma2.solar_properties' settings")
-            return None
-        options[key] = solar_properties_key.get(key)
-
-    return options
+    required_keys = [
+        {
+            'sbhistory': {'required': True, 'keys':
+                          [
+                              {'daily_history': {'required': True, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'start': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                              {'fine_history': {'required': True, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'start': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                              {'irradiance': {'required': True, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'start': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                              {'csv_file': {'required': False, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'path': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                          ],
+                          },
+            'multisma2': {'required': True, 'keys':
+                          [
+                              {'log': {'required': True, 'keys': [
+                                  {'file': {'required': True, 'keys': [], 'type': str}},
+                                  {'format': {'required': True, 'keys': [], 'type': str}},
+                                  {'level': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                              {'site': {'required': True, 'keys': [
+                                  {'name': {'required': True, 'keys': [], 'type': str}},
+                                  {'region': {'required': True, 'keys': [], 'type': str}},
+                                  {'tz': {'required': True, 'keys': [], 'type': str}},
+                                  {'latitude': {'required': True, 'keys': [], 'type': float}},
+                                  {'longitude': {'required': True, 'keys': [], 'type': float}},
+                                  {'elevation': {'required': True, 'keys': [], 'type': float}},
+                                  {'co2_avoided': {'required': True, 'keys': [], 'type': float}},
+                              ]}},
+                              {'solar_properties': {'required': True, 'keys': [
+                                  {'azimuth': {'required': True, 'keys': [], 'type': float}},
+                                  {'tilt': {'required': True, 'keys': [], 'type': float}},
+                                  {'area': {'required': True, 'keys': [], 'type': float}},
+                                  {'efficiency': {'required': True, 'keys': [], 'type': float}},
+                                  {'rho': {'required': True, 'keys': [], 'type': float}},
+                              ]}},
+                              {'influxdb2': {'required': False, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'org': {'required': True, 'keys': [], 'type': str}},
+                                  {'url': {'required': True, 'keys': [], 'type': str}},
+                                  {'bucket': {'required': True, 'keys': [], 'type': str}},
+                                  {'token': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                              {'mqtt': {'required': False, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'client': {'required': True, 'keys': [], 'type': str}},
+                                  {'ip': {'required': True, 'keys': [], 'type': str}},
+                                  {'port': {'required': True, 'keys': [], 'type': int}},
+                                  {'username': {'required': True, 'keys': [], 'type': str}},
+                                  {'password': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
+                              {'inverters': {'required': True, 'keys': [
+                                  {'inverter': {'required': True, 'keys': [
+                                      {'name': {'required': True, 'keys': [], 'type': str}},
+                                      {'url': {'required': True, 'keys': [], 'type': str}},
+                                      {'username': {'required': True, 'keys': [], 'type': str}},
+                                      {'password': {'required': True, 'keys': [], 'type': str}},
+                                  ]}},
+                              ]}},
+                          ],
+                          },
+        },
+    ]
+    result = check_required_keys(dict(config), required_keys)
+    check_unsupported(dict(config), required_keys)
+    return config if result else None
 
 
-def check_csv_file(config):
-    if not config.sbhistory or 'csv_file' not in config.sbhistory.keys():
-        _LOGGER.warning("Expected option 'csv_file' in the 'sbhistory' settings")
-        return None
+def read_config(checking=False):
+    """Open the YAML configuration file and optionally check the contents"""
 
-    required_keys = ['enable', 'path']
-    csv_file = dict(config.sbhistory.csv_file)
-    for key in required_keys:
-        if csv_file.get(key, None) is None:
-            _LOGGER.error("Missing required 'enable' option in 'csv_file' settings")
-            return None
-
-    if not isinstance(csv_file.get('enable'), bool):
-        _LOGGER.error("'enable' option in 'csv_file' settings must be a boolean")
-        return None
-
-    return [csv_file.get('enable'), csv_file.get('path')]
-
-
-def read_config():
     try:
         yaml.FullLoader.add_constructor('!secret', secret_yaml)
         yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_YAML)
         config = config_from_yaml(data=yaml_file, read_from_file=True)
 
-        irradiance_options = check_irradiance(config)
-        daily_history_options = check_daily_history(config)
-        fine_history_options = check_fine_history(config)
-        csv_options = check_csv_file(config)
-        if None in [irradiance_options, daily_history_options, fine_history_options, csv_options]:
-            return None
-        return config
+        if config and checking:
+            config = check_config(config)
 
+    except FailedInitialization:
+        raise
     except Exception as e:
-        print(e)
-        return None
+        error_message = buildYAMLExceptionString(exception=e, file=yaml_file)
+        raise FailedInitialization(Exception(f"{error_message}"))
+    return config
 
 
 if __name__ == '__main__':
-    # make sure we can run
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
         config = read_config()
     else:

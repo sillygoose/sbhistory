@@ -14,7 +14,7 @@ Make sure your InfluxDB database has an infinite retention policy, or at least l
 
 Rename the `sample_secrets.yaml` file to `secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  The `secrets.yaml` file is tagged in the `.gitignore` file and will not be included in the repository but if you wish you can put `secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
 
-Run the application from the command line using Python 3.7 or later:
+Run the application from the command line using Python 3.9 or later:
 
 ```
     cd sbhistory
@@ -110,5 +110,3 @@ Thanks for the following packages used to build this software:
     - Chapter 7 of 'Renewable and Efficient Electric Power Systems' by Masters
 - Tricks for managing startup and shutdown
     - https://github.com/wbenny/python-graceful-shutdown
-
-

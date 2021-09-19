@@ -1,42 +1,17 @@
-# Edit this file to reflect your site details, the sbhistory software uses
-# the site, solar properties, database, and inverter settings from multisma2 and adds
-# a few of its own for controlling the optional outputs.
-
-sbhistory:
-  # Select the outputs you want to populate the database
-  #   - daily_history is Wh meter in daily increments
-  #   - fine_history is Wh meter in 5 minute increments (limited inverter history)
-  #   - irradiance_history is an estimate of local irradiation (W)
-  #   - csv_file imports Seaboard meter CSV irradiance files
-  daily_history:
-    enable: True
-    start: '2021-09-01'
-
-  # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
-  fine_history:
-    enable: False
-    start: 'recent'
-    #start:  '2021-09-01'
-
-  irradiance:
-    enable: False
-    start:  '2021-09-01'
-
-  csv_file:
-    enable: False
-    path:   '/Users/sillygoose/Documents/Parker Lane/Solar/seaward'
-
-
-# This is the contents of your multisma2 YAML file for database, inverter,and site
-# specifications.
+# Copy this file to 'multisma2.yaml' and complete with your site details.
 multisma2:
   # Application log file customization, logging levels are 'INFO', 'WARN', and 'ERROR'
   log:
-    file: 'log/sbhistory'
+    file: 'log/multisma2'
     format: '[%(asctime)s] [%(module)s] [%(levelname)s] %(message)s'
     level: 'INFO'
 
   # Site location details for solar time calculations (elevation is in meters)
+  # Production fuel mix factor (kgCO2e per kWh) which is an estimate of local utility KgCO2e/kWh
+  # You can get these estimates from the EPA, your utility company
+  # or from https://www.carbonfootprint.com/international_electricity_factors.html
+  #
+  # 'name', 'region', and 'tz' are type 'str', the rest are type 'float'
   site:
     name:         !secret site_name
     region:       !secret site_region
@@ -44,9 +19,6 @@ multisma2:
     latitude:     !secret site_latitude
     longitude:    !secret site_longitude
     elevation:    !secret site_elevation
-    # Production fuel mix factor (kgCO2e per kWh) which is an estimate of local utility KgCO2e/kWh
-    # You can get these estimates from the EPA, your utility company
-    # or from https://www.carbonfootprint.com/international_electricity_factors.html
     co2_avoided:  !secret site_co2_avoided
 
   # Solar array properties for predicting potential solar radiation, azimuth and tilt are degrees,
@@ -54,6 +26,8 @@ multisma2:
   # account for shading, soiling, and other local effects.  rho is the ground reflectance, values
   # might range from 0.1 for a dark roof and as high as 0.8 for fresh snow (serious modeling might
   # replace this with a function to vary by month).
+  #
+  # All values are type 'float'
   solar_properties:
     azimuth:    !secret solar_properties_azimuth
     tilt:       !secret solar_properties_tilt
@@ -66,26 +40,26 @@ multisma2:
   # with just minor changes in the configuration making a future upgrade to v2 a simple change of options.
   #
   # Influxdb configuration options:
-  #   influxdb2.enable        set to True to enable InfluxDB output, False to disable output
-  #   influxdb2.bucket        set to the InfluxDB bucket (v2) or 'database/retention_policy' (v1.8)
-  #   influxdb2.url           set to the InfluxDB server URL and port
-  #   influxdb2.org           set to the v2 organization or '-' if using v1.8.x
-  #   influxdb2.token         set to a valid v2 token or v1.8.x 'username:password'
+  #   influxdb2.enable        set to True to enable InfluxDB output ('bool')
+  #   influxdb2.bucket        set to the InfluxDB bucket (v2) or 'database/retention_policy' (v1.8)('str')
+  #   influxdb2.url           set to the InfluxDB server URL and port ('str')
+  #   influxdb2.org           set to the v2 organization or '-' if using v1.8.x ('str')
+  #   influxdb2.token         set to a valid v2 token or v1.8.x 'username:password' ('str')
   influxdb2:
     enable: True
     org:    !secret influxdb2_org
-    url:    http://dundee.local:8086    # influxdb2_url
-    bucket: sbhistory                   # influxdb2_bucket
+    url:    !secret influxdb2_url
+    bucket: !secret influxdb2_bucket
     token:  !secret influxdb2_token
 
   # MQTT setup
   # The MQTT interface uses the following options to configure the interface:
-  #   mqtt.enable            set to True to enable sending messages to the broker or False to disable MQTT output
-  #   mqtt.client            used as top level topic and random broker name
-  #   mqtt.ip                set to the fully qualified domain name or IP address of the broker
-  #   mqtt.port              set to MQTT broker port
-  #   mqtt.username          set to the username if authentication is used, otherwise an empty string
-  #   mqtt.password          set to the password port if authentication is used, otherwise an empty string
+  #   mqtt.enable           set to True to enable sending messages to the MQTT broker ('bool')
+  #   mqtt.client           used as top level topic and random broker name ('str')
+  #   mqtt.ip               set to the fully qualified domain name or IP address of the broker ('str')
+  #   mqtt.port             set to MQTT broker port  ('int')
+  #   mqtt.username         set to the username if authentication is used, otherwise an empty string ('str')
+  #   mqtt.password         set to the password port if authentication is used, otherwise an empty string ('str')
   mqtt:
     enable:   False
     client:   !secret mqtt_client

@@ -4,6 +4,7 @@
 
 import logging
 import sys
+import os
 
 import asyncio
 import aiohttp
@@ -13,6 +14,8 @@ from pvsite import Site
 import version
 import logfiles
 from readconfig import read_config
+
+from exceptions import FailedInitialization
 
 
 _LOGGER = logging.getLogger("sbhistory")
@@ -59,11 +62,11 @@ class Multisma2:
             raise Multisma2.FailedInitialization
 
     async def _astop(self):
+        _LOGGER.info("Closing sbhistory application")
         if self._site:
             await self._site.stop()
         if self._session:
             await self._session.close()
-        logfiles.stop()
 
     async def _await(self):
         await self._site.run()
@@ -81,25 +84,25 @@ class Multisma2:
 def main():
     """Set up and start sbhistory."""
 
-    logfiles.create_application_log(_LOGGER)
-    _LOGGER.info(f"sbhistory - Sunny Boy inverter production history utility {version.get_version()}")
-
-    config = read_config()
-    if not config:
-        _LOGGER.error("Error processing YAML configuration - exiting")
+    try:
+        config = read_config(checking=False)
+    except FailedInitialization as e:
+        print(f"{e}")
         return
 
+    logfiles.start(config)
+    _LOGGER.info(f"multisma2 inverter collection utility {version.get_version()}, PID is {os.getpid()}")
+
     try:
-        multisma2 = Multisma2(config)
+        multisma2 = Multisma2(read_config(checking=True))
         multisma2.run()
-    except Multisma2.FailedInitialization:
-        pass
+    except FailedInitialization as e:
+        _LOGGER.error(f"{e}")
     except Exception as e:
         _LOGGER.error(f"Unexpected exception: {e}")
 
 
 if __name__ == "__main__":
-    # make sure we can run multisma2
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
         main()
     else:
