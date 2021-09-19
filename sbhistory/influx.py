@@ -16,19 +16,21 @@ from exceptions import FailedInitialization
 _LOGGER = logging.getLogger("sbhistory")
 
 LP_LOOKUP = {
-    'ac_measurements/power': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'power'},
-    'ac_measurements/voltage': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'voltage'},
-    'ac_measurements/current': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'current'},
-    'ac_measurements/efficiency': {'measurement': 'ac_measurements', 'tag': '_inverter', 'field': 'efficiency'},
-    'dc_measurements/power': {'measurement': 'dc_measurements', 'tag': '_inverter', 'field': 'power'},
-    'status/reason_for_derating': {'measurement': 'status', 'tag': '_inverter', 'field': 'derating'},
-    'status/general_operating_status': {'measurement': 'status', 'tag': '_inverter', 'field': 'operating_status'},
-    'status/grid_relay': {'measurement': 'status', 'tag': '_inverter', 'field': 'grid_relay'},
-    'status/condition': {'measurement': 'status', 'tag': '_inverter', 'field': 'condition'},
-    'production/total_wh': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
-    'production/midnight': {'measurement': 'production', 'tag': '_inverter', 'field': 'total_wh'},
-    'sun/position': {'measurement': 'sun', 'tag': None, 'field': None},
-    'sun/irradiance': {'measurement': 'sun', 'tag': 'measured', 'field': 'irradiance'},
+    'ac_measurements/power': {'measurement': 'ac_measurements', 'tags': ['_inverter'], 'field': 'power'},
+    'ac_measurements/voltage': {'measurement': 'ac_measurements', 'tags': ['_inverter'], 'field': 'voltage'},
+    'ac_measurements/current': {'measurement': 'ac_measurements', 'tags': ['_inverter'], 'field': 'current'},
+    'ac_measurements/efficiency': {'measurement': 'ac_measurements', 'tags': ['_inverter'], 'field': 'efficiency'},
+    'dc_measurements/power': {'measurement': 'dc_measurements', 'tags': ['_inverter', '_string'], 'field': 'power'},
+    'dc_measurements/voltage': {'measurement': 'dc_measurements', 'tags': ['_inverter', '_string'], 'field': 'voltage'},
+    'dc_measurements/current': {'measurement': 'dc_measurements', 'tags': ['_inverter', '_string'], 'field': 'current'},
+    'status/reason_for_derating': {'measurement': 'status', 'tags': ['_inverter'], 'field': 'derating'},
+    'status/general_operating_status': {'measurement': 'status', 'tags': ['_inverter'], 'field': 'operating_status'},
+    'status/grid_relay': {'measurement': 'status', 'tags': ['_inverter'], 'field': 'grid_relay'},
+    'status/condition': {'measurement': 'status', 'tags': ['_inverter'], 'field': 'condition'},
+    'production/total_wh': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'total_wh'},
+    'production/midnight': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'midnight'},
+    'sun/position': {'measurement': 'sun', 'tags': None, 'field': None},
+    'sun/irradiance': {'measurement': 'sun', 'tags': ['_type'], 'field': 'irradiance'},
 }
 
 
@@ -122,22 +124,23 @@ class InfluxDB:
             _LOGGER.error(f"write_history(): unknown topic '{topic}'")
             return False
 
-        measurement = lookup.get("measurement")
-        tag = lookup.get("tag")
-        field = lookup.get("field")
+        measurement = lookup.get('measurement')
+        tags = lookup.get('tags', None)
+        field = lookup.get('field', None)
         lps = []
         for inverter in site:
             inverter_name = inverter.pop(0)
-            name = inverter_name.get("inverter", "sunnyboy")
+            name = inverter_name.get('inverter', 'sunnyboy')
             for history in inverter:
-                t = history["t"]
-                v = history["v"]
-                midnight = history.get("midnight", "no")
+                t = history['t']
+                v = history['v']
                 if v is None:
-                    # _LOGGER.info(f"write_history(): '{type(v)}' in '{name}/{t}/{measurement}/{field}'")
                     continue
-                elif isinstance(v, int):
-                    lp = f"{measurement},{tag}={name},_midnight={midnight} {field}={v}i {t}"
+                lp = f"{measurement}"
+                if tags and len(tags):
+                    lp += f",{tags[0]}={name}"
+                if isinstance(v, int):
+                    lp += f" {field}={v}i {t}"
                     lps.append(lp)
                 else:
                     _LOGGER.error(

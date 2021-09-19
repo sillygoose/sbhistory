@@ -14,9 +14,9 @@ sbhistory:
 
   # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
-    enable: False
-    start: 'recent'
-    #start:  '2021-09-01'
+    enable: True
+    #start: 'recent'
+    start:  '2021-09-01'
 
   irradiance:
     enable: False
@@ -27,7 +27,7 @@ sbhistory:
     path:   '/Users/sillygoose/Documents/Parker Lane/Solar/seaward'
 
 
-# This is the contents of your multisma2 YAML file for database, inverter,and site
+# This is the contents of your multisma2 YAML file for the database, inverter,and site
 # specifications.
 multisma2:
   # Application log file customization, logging levels are 'INFO', 'WARN', and 'ERROR'

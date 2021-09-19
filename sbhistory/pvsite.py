@@ -18,7 +18,7 @@ from astral.sun import sun
 from astral import LocationInfo
 
 
-_LOGGER = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger('sbhistory')
 
 
 def diff_month(d1, d2):
@@ -85,7 +85,7 @@ class Site:
         await self.stop_inverters()
 
         for inverter in inverters:
-            t = inverter[1]["t"]
+            t = inverter[1]['t']
             dt = datetime.datetime.fromtimestamp(t)
             date = start.date()
             end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
@@ -93,17 +93,17 @@ class Site:
 
             # add missing dates as 0 Wh values
             while date < end_date:
-                print(".", end="", flush=True)
+                print('.', end='', flush=True)
                 newtime = datetime.datetime.combine(date, datetime.time(0, 0))
                 t = int(newtime.timestamp())
-                inverter.append({"t": t, "v": 0})
+                inverter.append({'t': t, 'v': 0})
                 date += delta
 
             # Sort the entries by date
             try:
                 inv0 = inverter
                 inv_name = inv0.pop(0)
-                inv0.sort(key=lambda item: item.get("t"))
+                inv0.sort(key=lambda item: item.get('t'))
                 inv0.insert(0, inv_name)
             except Exception as e:
                 print(e)
@@ -111,19 +111,17 @@ class Site:
             # normalize times to midnight
             midnight = datetime.time()
             for i in range(1, len(inverter)):
-                t = inverter[i]["t"]
-                v = inverter[i]["v"]
+                t = inverter[i]['t']
+                v = inverter[i]['v']
                 dt = datetime.datetime.fromtimestamp(t)
                 if dt.hour > 12:
                     new_day = dt.date() + datetime.timedelta(days=1)
                     new_dt = datetime.datetime.combine(new_day, midnight)
-                    inverter[i]["t"] = int(new_dt.timestamp())
+                    inverter[i]['t'] = int(new_dt.timestamp())
                 else:
                     new_day = dt.date()
                     new_dt = datetime.datetime.combine(new_day, midnight)
-                    inverter[i]["t"] = int(new_dt.timestamp())
-
-                inverter[i]["midnight"] = "yes"
+                    inverter[i]['t'] = int(new_dt.timestamp())
 
         # Calculate the total
         total = {}
@@ -131,14 +129,14 @@ class Site:
         for inverter in inverters:
             last_non_null = None
             for i in range(1, len(inverter)):
-                print(".", end="", flush=True)
-                t = inverter[i]["t"]
-                v = inverter[i]["v"]
+                print('.', end='', flush=True)
+                t = inverter[i]['t']
+                v = inverter[i]['v']
                 if v is None:
                     if not last_non_null:
                         continue
                     v = last_non_null
-                    inverter[i]["v"] = last_non_null
+                    inverter[i]['v'] = last_non_null
 
                 total[t] = v + total.get(t, 0)
                 count[t] = count.get(t, 0) + 1
@@ -149,19 +147,18 @@ class Site:
             site_total = []
             for t, v in total.items():
                 if count[t] == len(inverters):
-                    site_total.append({"t": t, "v": v, "midnight": "yes"})
-                    # print(f"\nmidnight detected on {t} with meter {v}")
-            site_total.insert(0, {"inverter": "site"})
+                    site_total.append({'t': t, 'v': v})
+            site_total.insert(0, {'inverter': 'site'})
             inverters.append(site_total)
 
-        self._influx.write_history(inverters, "production/midnight")
+        self._influx.write_history(inverters, 'production/midnight')
         print()
 
     # fine production, 5 minute increments
     async def populate_fine_history(self, config):
         if not config.sbhistory.fine_history.enable:
             return
-        recent = config.sbhistory.fine_history.start.lower() == "recent"
+        recent = config.sbhistory.fine_history.start.lower() == 'recent'
         try:
             if not recent:
                 date = datetime.date.fromisoformat(config.sbhistory.fine_history.start)
@@ -199,23 +196,18 @@ class Site:
             # await self.stop_inverters()
 
             for inverter in inverters:
-                print(".", end="", flush=True)
+                print('.', end='', flush=True)
                 last_non_null = None
                 for i in range(1, len(inverter)):
-                    t = inverter[i]["t"]
-                    v = inverter[i]["v"]
-
-                    # Check for midnight timestamp
-                    dt = datetime.datetime.fromtimestamp(t)
-                    if dt.hour == 0 and dt.minute == 0:
-                        inverter[i]["midnight"] = "no"
+                    t = inverter[i]['t']
+                    v = inverter[i]['v']
 
                     # Handle any missing data points
                     if v is None:
                         if not last_non_null:
                             continue
                         v = last_non_null
-                        inverter[i]["v"] = last_non_null
+                        inverter[i]['v'] = last_non_null
                     total[t] = v + total.get(t, 0)
                     count[t] = count.get(t, 0) + 1
                     last_non_null = v
@@ -225,17 +217,11 @@ class Site:
                 site_total = []
                 for t, v in total.items():
                     if count[t] == len(inverters):
-                        # Check for midnight timestamp
-                        dt = datetime.datetime.fromtimestamp(t)
-                        midnight = "yes" if dt.hour == 0 and dt.minute == 0 else "no"
-                        if midnight == "yes":
-                            # print(f"\nmidnight detected on {t} with meter {v}")
-                            midnight = "yes"
-                        site_total.append({"t": t, "v": v, "midnight": midnight})
-                site_total.insert(0, {"inverter": "site"})
+                        site_total.append({'t': t, 'v': v})
+                site_total.insert(0, {'inverter': 'site'})
                 inverters.append(site_total)
 
-            self._influx.write_history(inverters, "production/total_wh")
+            self._influx.write_history(inverters, 'production/total_wh')
             date += delta
 
         await self.stop_inverters()
@@ -268,14 +254,14 @@ class Site:
 
             lp_points = []
             while date < end_date:
-                print(".", end="", flush=True)
+                print('.', end='', flush=True)
                 astral = sun(date=date, observer=siteinfo.observer, tzinfo=tzinfo)
-                dawn = astral["dawn"]
-                dusk = astral["dusk"]
+                dawn = astral['dawn']
+                dusk = astral['dusk']
                 irradiance = clearsky.global_irradiance(site_properties, solar_properties, dawn, dusk)
                 for point in irradiance:
-                    t = point["t"]
-                    v = point["v"]
+                    t = point['t']
+                    v = point['v']
                     # sample: sun,_type=modeled irradiance=800 1556813561098
                     lp = f"sun,_type=modeled irradiance={round(v, 1)} {t}"
                     lp_points.append(lp)
@@ -300,43 +286,43 @@ class Site:
             for entry in os.scandir(directory):
                 if not entry.is_file():
                     continue
-                if not entry.path.endswith(".csv"):
+                if not entry.path.endswith('.csv'):
                     continue
 
                 csv_indices = {}
                 lp_points = []
-                with open(entry.path, newline="") as csvfile:
+                with open(entry.path, newline='') as csvfile:
                     _LOGGER.info(f"Processing file {entry.name}")
-                    reader = csv.reader(csvfile, delimiter=",", quotechar="|")
+                    reader = csv.reader(csvfile, delimiter=',', quotechar='|')
                     for row in reader:
                         if reader.line_num == 1:
-                            to_find = ["Date", "Time", "Tpv", "Ta", "Irr", "Irr Unit", "Temp Unit"]
+                            to_find = ['Date', 'Time', 'Tpv', 'Ta', 'Irr', 'Irr Unit', 'Temp Unit']
                             for heading in to_find:
                                 index = row.index(heading)
                                 csv_indices[heading] = index
                         else:
-                            irradiance = row[csv_indices["Irr"]]
-                            if irradiance.startswith("<"):
-                                irradiance = "0"
+                            irradiance = row[csv_indices['Irr']]
+                            if irradiance.startswith('<'):
+                                irradiance = '0'
                             irradiance = float(irradiance)
 
-                            date = row[csv_indices["Date"]]
-                            date_dmy = date.split(".")
+                            date = row[csv_indices['Date']]
+                            date_dmy = date.split('.')
                             d = datetime.date(
-                                year=int("20" + date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0])
+                                year=int('20' + date_dmy[2]), month=int(date_dmy[1]), day=int(date_dmy[0])
                             )
 
-                            time = row[csv_indices["Time"]]
-                            time_hms = time.split(":")
+                            time = row[csv_indices['Time']]
+                            time_hms = time.split(':')
                             t = datetime.time(hour=int(time_hms[0]), minute=int(time_hms[1]))
                             dt = datetime.datetime.combine(date=d, time=t, tzinfo=tzinfo)
                             ts = int(dt.timestamp())
 
-                            tpv = row[csv_indices["Tpv"]]
-                            if tpv == "ERR":
+                            tpv = row[csv_indices['Tpv']]
+                            if tpv == 'ERR':
                                 tpv = None
-                            ta = row[csv_indices["Ta"]]
-                            if ta == "ERR":
+                            ta = row[csv_indices['Ta']]
+                            if ta == 'ERR':
                                 ta = None
 
                             # sample: sun,_type=measured irradiance=800 1556813561098
@@ -347,7 +333,7 @@ class Site:
                             if ta:
                                 # sample: sun,_type=ambient temperature=8 1556813561098
                                 lp_points.append(f"sun,_type=ambient temperature={float(tpv)} {ts}")
-                            print(".", end="", flush=True)
+                            print('.', end='', flush=True)
 
                     self._influx.write_points(lp_points)
                     print()

@@ -31,8 +31,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
         _measurement    production
         _inverter       inverter name(s), site
-        _field          total_wh
-        _midnight       yes
+        _field          midnight
 
     This measurement makes finding the production for a day, month, year, or any period the difference between the two selected records.
 
@@ -45,7 +44,6 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
         _measurement    production
         _inverter       inverter name(s), site
         _field          total_wh
-        _midnight       no (yes if the measurement occurs at midnight)
 
     Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
 
