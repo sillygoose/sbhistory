@@ -238,36 +238,27 @@ def check_irradiance(config):
 
 
 def check_csv_file(config):
-    options = {}
-    sbhistory_key = config.sbhistory
-    if not sbhistory_key or "csv_file" not in sbhistory_key.keys():
+    if not config.sbhistory or 'csv_file' not in config.sbhistory.keys():
         _LOGGER.warning("Expected option 'csv_file' in the 'sbhistory' settings")
         return None
 
-    csv_file_key = sbhistory_key.csv_file
-    if not csv_file_key or "enable" not in csv_file_key.keys():
-        _LOGGER.error("Missing required 'enable' option in 'csv_file' settings")
+    required_keys = ['enable', 'path']
+    csv_file = dict(config.sbhistory.csv_file)
+    for key in required_keys:
+        if csv_file.get(key, None) is None:
+            _LOGGER.error("Missing required 'enable' option in 'csv_file' settings")
+            return None
+
+    if not isinstance(csv_file.get('enable'), bool):
+        _LOGGER.error("'enable' option in 'csv_file' settings must be a boolean")
         return None
 
-    if isinstance(csv_file_key.enable, bool):
-        if not csv_file_key.enable:
-            _LOGGER.info("'csv_file' option is disabled in the 'sbhistory' settings")
-    else:
-        _LOGGER.error("'enable' option in 'irradiance' settings must be a boolean")
-        return None
-
-    options["enable"] = csv_file_key.enable
-    if "path" not in csv_file_key.keys():
-        _LOGGER.error("Missing required 'path' option in 'csv_file' settings")
-        return None
-
-    options["path"] = csv_file_key.path
-    return options
+    return [csv_file.get('enable'), csv_file.get('path')]
 
 
 def read_config():
     try:
-        yaml.FullLoader.add_constructor("!secret", secret_yaml)
+        yaml.FullLoader.add_constructor('!secret', secret_yaml)
         yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_YAML)
         config = config_from_yaml(data=yaml_file, read_from_file=True)
 
@@ -284,7 +275,7 @@ def read_config():
         return None
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # make sure we can run
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
         config = read_config()
