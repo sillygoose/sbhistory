@@ -152,8 +152,7 @@ def check_required_keys(yaml, required, path='') -> bool:
             requiredKey = rv.get('required')
             requiredSubkeys = rv.get('keys')
             keyType = rv.get('type', None)
-            typeStr = '' if not keyType else f" (type is '{keyType.__name__}')"
-            requiredStr = 'is required for operation' if requiredKey else ''
+            typeStr = '' if not keyType else f"(type is '{keyType.__name__}')"
 
             if not yaml:
                 raise FailedInitialization(
@@ -162,15 +161,21 @@ def check_required_keys(yaml, required, path='') -> bool:
             if isinstance(yaml, list):
                 for index, element in enumerate(yaml):
                     path = f"{currentpath}[{index}]"
-                    yamlKeys = element.keys()
-                    if rk not in yamlKeys:
-                        _LOGGER.error(f"'{currentpath}' {requiredStr}{typeStr}")
-                        continue
 
-                    yamlDict = dict(element)
-                    yamlValue = yamlDict.get(rk, None)
-                    if keyType and not isinstance(yamlValue, keyType):
+                    yamlKeys = element.keys()
+                    if requiredKey:
+                        if rk not in yamlKeys:
+                            _LOGGER.error(f"'{currentpath}' is required for operation {typeStr}")
+                            passed = False
+                            continue
+
+                    yamlValue = dict(element).get(rk, None)
+                    if yamlValue is None:
+                        return passed
+
+                    if rk in yamlKeys and keyType and not isinstance(yamlValue, keyType):
                         _LOGGER.error(f"'{currentpath}' should be type '{keyType.__name__}'")
+                        passed = False
 
                     if isinstance(requiredSubkeys, list):
                         passed = check_required_keys(yamlValue, requiredSubkeys, path) and passed
@@ -178,14 +183,19 @@ def check_required_keys(yaml, required, path='') -> bool:
                         raise FailedInitialization(Exception('Unexpected YAML checking error'))
             elif isinstance(yaml, dict) or isinstance(yaml, Configuration):
                 yamlKeys = yaml.keys()
-                if rk not in yamlKeys:
-                    _LOGGER.error(f"'{currentpath}' {requiredStr}{typeStr}")
-                    continue
+                if requiredKey:
+                    if rk not in yamlKeys:
+                        _LOGGER.error(f"'{currentpath}' is required for operation {typeStr}")
+                        passed = False
+                        continue
 
-                yamlDict = dict(yaml)
-                yamlValue = yamlDict.get(rk, None)
-                if keyType and not isinstance(yamlValue, keyType):
+                yamlValue = dict(yaml).get(rk, None)
+                if yamlValue is None:
+                    return passed
+
+                if rk in yamlKeys and keyType and not isinstance(yamlValue, keyType):
                     _LOGGER.error(f"'{currentpath}' should be type '{keyType.__name__}'")
+                    passed = False
 
                 if isinstance(requiredSubkeys, list):
                     passed = check_required_keys(yamlValue, requiredSubkeys, currentpath) and passed
@@ -311,6 +321,12 @@ def check_config(config):
                                       {'username': {'required': True, 'keys': [], 'type': str}},
                                       {'password': {'required': True, 'keys': [], 'type': str}},
                                   ]}},
+                              ]}},
+                              {'settings': {'required': False, 'keys': [
+                                  {'fast_rate': {'required': False, 'keys': [], 'type': int}},
+                                  {'medium_rate': {'required': False, 'keys': [], 'type': int}},
+                                  {'slow_rate': {'required': False, 'keys': [], 'type': int}},
+                                  {'turtle_rate': {'required': False, 'keys': [], 'type': int}},
                               ]}},
                           ],
                           },
