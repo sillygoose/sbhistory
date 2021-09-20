@@ -19,7 +19,7 @@ sbhistory:
     start:  '2021-09-01'
 
   irradiance:
-    enable: True
+    enable: False
     start:  '2021-09-01'
 
   csv_file:

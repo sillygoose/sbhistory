@@ -75,14 +75,16 @@ class Site:
         stop += od
         _LOGGER.info(f"Populating daily history values from {start.date()} to {stop.date()}")
 
-        await self.start_inverters()
-        inverters = await asyncio.gather(
-            *(
-                inverter.read_history(start=int(start.timestamp()), stop=int(stop.timestamp()))
-                for inverter in self._inverters
+        if await self.start_inverters():
+            inverters = await asyncio.gather(
+                *(
+                    inverter.read_history(start=int(start.timestamp()), stop=int(stop.timestamp()))
+                    for inverter in self._inverters
+                )
             )
-        )
-        await self.stop_inverters()
+            await self.stop_inverters()
+        else:
+            return
 
         for inverter in inverters:
             t = inverter[1]['t']
@@ -175,57 +177,56 @@ class Site:
         else:
             _LOGGER.info(f"Populating fine history values from {date} to {end_date}")
 
-        await self.start_inverters()
-        while date < end_date:
-            if recent:
-                now = datetime.datetime.now()
-                start = datetime.datetime.combine(date, now.time()) - datetime.timedelta(minutes=120)
-            else:
-                start = datetime.datetime.combine(date, datetime.time(0, 0)) - datetime.timedelta(minutes=5)
-            stop = start + delta
+        if await self.start_inverters():
+            while date < end_date:
+                if recent:
+                    now = datetime.datetime.now()
+                    start = datetime.datetime.combine(date, now.time()) - datetime.timedelta(minutes=120)
+                else:
+                    start = datetime.datetime.combine(date, datetime.time(0, 0)) - datetime.timedelta(minutes=5)
+                stop = start + delta
 
-            total = {}
-            count = {}
-            # await self.start_inverters()
-            inverters = await asyncio.gather(
-                *(
-                    inverter.read_fine_history(start=int(start.timestamp()), stop=int(stop.timestamp()))
-                    for inverter in self._inverters
+                total = {}
+                count = {}
+                # if await self.start_inverters():
+                inverters = await asyncio.gather(
+                    *(
+                        inverter.read_fine_history(start=int(start.timestamp()), stop=int(stop.timestamp()))
+                        for inverter in self._inverters
+                    )
                 )
-            )
-            # await self.stop_inverters()
+                # await self.stop_inverters()
 
-            for inverter in inverters:
-                print('.', end='', flush=True)
-                last_non_null = None
-                for i in range(1, len(inverter)):
-                    t = inverter[i]['t']
-                    v = inverter[i]['v']
+                for inverter in inverters:
+                    print('.', end='', flush=True)
+                    last_non_null = None
+                    for i in range(1, len(inverter)):
+                        t = inverter[i]['t']
+                        v = inverter[i]['v']
 
-                    # Handle any missing data points
-                    if v is None:
-                        if not last_non_null:
-                            continue
-                        v = last_non_null
-                        inverter[i]['v'] = last_non_null
-                    total[t] = v + total.get(t, 0)
-                    count[t] = count.get(t, 0) + 1
-                    last_non_null = v
+                        # Handle any missing data points
+                        if v is None:
+                            if not last_non_null:
+                                continue
+                            v = last_non_null
+                            inverter[i]['v'] = last_non_null
+                        total[t] = v + total.get(t, 0)
+                        count[t] = count.get(t, 0) + 1
+                        last_non_null = v
 
-            # Site output if multiple inverters
-            if len(inverters) > 1:
-                site_total = []
-                for t, v in total.items():
-                    if count[t] == len(inverters):
-                        site_total.append({'t': t, 'v': v})
-                site_total.insert(0, {'inverter': 'site'})
-                inverters.append(site_total)
+                # Site output if multiple inverters
+                if len(inverters) > 1:
+                    site_total = []
+                    for t, v in total.items():
+                        if count[t] == len(inverters):
+                            site_total.append({'t': t, 'v': v})
+                    site_total.insert(0, {'inverter': 'site'})
+                    inverters.append(site_total)
 
-            self._influx.write_history(inverters, 'production/total_wh')
-            date += delta
-
+                self._influx.write_history(inverters, 'production/total_wh')
+                date += delta
+            print()
         await self.stop_inverters()
-        print()
 
     async def populate_irradiance(self, config):
         if not config.sbhistory.irradiance.enable:

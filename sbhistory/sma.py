@@ -11,6 +11,8 @@ import async_timeout
 import jmespath
 from aiohttp import client_exceptions
 
+from exceptions import SmaException
+
 
 _LOGGER = logging.getLogger('sbhistory')
 
@@ -33,7 +35,8 @@ class SMA:
     def __init__(self, session, url, password, group='user', uid=None):
         """Init SMA connection."""
         if group not in USERS:
-            raise KeyError("Invalid user type: {}".format(group))
+            _LOGGER.error(f"Invalid user type: {group}")
+            raise SmaException
         if password is not None and len(password) > 12:
             _LOGGER.warning("Password should not exceed 12 characters")
         if password is None:
@@ -61,7 +64,7 @@ class SMA:
                     return (await res.json()) or {}
             except (asyncio.TimeoutError, client_exceptions.ClientError):
                 continue
-        return {"err": "Could not connect to SMA at {} (timeout)".format(self._url)}
+        return {"err": "Could not connect to SMA at {self._url} (timeout)"}
 
     async def _read_body(self, url, payload):
         if self.sma_sid is None and self._new_session_data is not None:
@@ -74,15 +77,15 @@ class SMA:
         # On the first error we close the session which will re-login
         err = body.get('err')
         if err is not None:
-            _LOGGER.error(
+            _LOGGER.warning(
                 f"{self._url}: error detected, closing session to force another login attempt, got: {body}",
             )
             await self.close_session()
-            return None
+            raise SmaException
 
         if not isinstance(body, dict) or 'result' not in body:
             _LOGGER.error(f"No 'result' in reply from SMA, got: {body}")
-            return None
+            raise SmaException
 
         if self.sma_uid is None:
             # Get the unique ID
@@ -91,6 +94,7 @@ class SMA:
         result_body = body['result'].pop(self.sma_uid, None)
         if body != {'result': {}}:
             _LOGGER.error(f"Unexpected body {json.dumps(body)}, extracted {json.dumps(result_body)}")
+            raise SmaException
 
         return result_body
 
@@ -102,7 +106,7 @@ class SMA:
             return True
 
         err = body.pop('err', None)
-        msg = "Could not start session, %s, got {}".format(body)
+        msg = f"Could not start session, %s, got {body}"
 
         if err:
             if err == 503:
@@ -125,25 +129,37 @@ class SMA:
     async def read_values(self, keys):
         """Read a list of one or more keys."""
         payload = {'destDev': [], 'keys': keys}
-        result_body = await self._read_body(URL_VALUES, payload)
+        try:
+            result_body = await self._read_body(URL_VALUES, payload)
+        except SmaException:
+            return None
         return result_body
 
     async def read_instantaneous(self):
         """One command to read the sensors in the Instantaneous inverter view."""
         payload = {'destDev': []}
-        result_body = await self._read_body(URL_ONLINE, payload)
+        try:
+            result_body = await self._read_body(URL_ONLINE, payload)
+        except SmaException:
+            return None
         return result_body
 
     async def read_history(self, start, end):
         """Read the history for the specified period."""
         # {'destDev':[],'key':28704,'tStart':1601521200,'tEnd':1604217600}.
         payload = {'destDev': [], 'key': 28704, 'tStart': start, 'tEnd': end}
-        result_body = await self._read_body(URL_LOGGER, payload)
+        try:
+            result_body = await self._read_body(URL_LOGGER, payload)
+        except SmaException:
+            return None
         return result_body
 
     async def read_fine_history(self, start, end):
         """Read the fine history for the specified period."""
         # {'destDev':[],'key':28672,'tStart':1601521200,'tEnd':1604217600}.
         payload = {'destDev': [], 'key': 28672, 'tStart': start, 'tEnd': end}
-        result_body = await self._read_body(URL_LOGGER, payload)
+        try:
+            result_body = await self._read_body(URL_LOGGER, payload)
+        except SmaException:
+            return None
         return result_body

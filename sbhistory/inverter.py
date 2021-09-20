@@ -3,6 +3,8 @@
 import logging
 import sma
 
+from exceptions import SmaException
+
 
 _LOGGER = logging.getLogger('sbhistory')
 
@@ -22,7 +24,11 @@ class Inverter:
     async def initialize(self):
         """Setup inverter for data collection."""
         # SMA class object for access to inverters
-        self._sma = sma.SMA(session=self._session, url=self._url, password=self._password, group=self._group)
+        try:
+            self._sma = sma.SMA(session=self._session, url=self._url, password=self._password, group=self._group)
+        except SmaException:
+            return False
+
         await self._sma.new_session()
         if self._sma.sma_sid is None:
             _LOGGER.info('%s - no session ID', self._name)
