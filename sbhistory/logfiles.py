@@ -45,7 +45,7 @@ def start(config):
             log_level = _DEFAULT_LOG_LEVEL
 
     now = datetime.now()
-    filename = os.path.expanduser(log_file + "_" + now.strftime("%Y-%m-%d") + ".log")
+    filename = os.path.expanduser(log_file + '_' + now.strftime('%Y-%m-%d') + '.log')
 
     # Create the directory if needed
     filename_parts = os.path.split(filename)
@@ -55,7 +55,7 @@ def start(config):
 
     # Change log files at midnight
     handler = TimedRotatingFileHandler(filename, when='midnight', interval=1, backupCount=10)
-    handler.suffix = "%Y-%m-%d"
+    handler.suffix = '%Y-%m-%d'
     handler.setLevel(log_level)
     formatter = logging.Formatter(log_format)
     # formatter = logging.Formatter(config_log.format)

@@ -102,7 +102,7 @@ def main():
         _LOGGER.error(f"Unexpected exception: {e}")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
         main()
     else:

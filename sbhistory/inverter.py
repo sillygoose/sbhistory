@@ -4,7 +4,7 @@ import logging
 import sma
 
 
-_LOGGER = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger('sbhistory')
 
 
 class Inverter:
@@ -25,7 +25,7 @@ class Inverter:
         self._sma = sma.SMA(session=self._session, url=self._url, password=self._password, group=self._group)
         await self._sma.new_session()
         if self._sma.sma_sid is None:
-            _LOGGER.info("%s - no session ID", self._name)
+            _LOGGER.info('%s - no session ID', self._name)
             return False
         print(f"Connected to SMA inverter {self._name} at {self._url}")
         return True
@@ -39,11 +39,11 @@ class Inverter:
     async def read_history(self, start, stop):
         """Read the baseline inverter production."""
         history = await self._sma.read_history(start, stop)
-        history.insert(0, {"inverter": self._name})
+        history.insert(0, {'inverter': self._name})
         return history
 
     async def read_fine_history(self, start, stop):
         """Read the baseline inverter production."""
         history = await self._sma.read_fine_history(start, stop)
-        history.insert(0, {"inverter": self._name})
+        history.insert(0, {'inverter': self._name})
         return history

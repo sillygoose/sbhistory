@@ -17,7 +17,7 @@ from astral.sun import sun
 from astral import LocationInfo
 
 
-_LOGGER = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger('sbhistory')
 
 
 def current_global_irradiance(site_properties, solar_properties, timestamp):
@@ -26,7 +26,7 @@ def current_global_irradiance(site_properties, solar_properties, timestamp):
     n = dt.timetuple().tm_yday
 
     sigma = math.radians(solar_properties.tilt)
-    rho = solar_properties.get("rho", 0.0)
+    rho = solar_properties.get('rho', 0.0)
 
     C = 0.095 + 0.04 * math.sin(math.radians((n - 100) / 365))
     sin_sigma = math.sin(sigma)
@@ -87,13 +87,13 @@ def global_irradiance(site_properties, solar_properties, dawn, dusk):
     while dt < stop:
         timestamp = int(dt.timestamp())
         igc = current_global_irradiance(site_properties, solar_properties, timestamp)
-        irradiance.append({"t": timestamp, "v": igc})
+        irradiance.append({'t': timestamp, 'v': igc})
         dt += datetime.timedelta(minutes=MINUTES)
     return irradiance
 
 
-if __name__ == "__main__":
-    yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sbhistory.yaml")
+if __name__ == '__main__':
+    yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sbhistory.yaml')
     config = config_from_yaml(data=yaml_file, read_from_file=True)
     site_properties = config.multisma2.site
     solar_properties = config.multisma2.solar_properties
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         longitude=site_properties.longitude,
     )
     astral = sun(date=datetime.datetime.now(), observer=siteinfo.observer, tzinfo=tzinfo)
-    dawn = astral["dawn"]
-    dusk = astral["dusk"]
+    dawn = astral['dawn']
+    dusk = astral['dusk']
     igc_results = global_irradiance(site_properties, solar_properties, dawn, dusk)
     pprint(f"{igc_results}")

@@ -19,12 +19,12 @@ sbhistory:
     start:  '2021-09-01'
 
   irradiance:
-    enable: False
+    enable: True
     start:  '2021-09-01'
 
   csv_file:
     enable: False
-    path:   '/Users/sillygoose/Documents/Parker Lane/Solar/seaward'
+    path:   !secret sbhistory_csv_file_path
 
 
 # This is the contents of your multisma2 YAML file for the database, inverter,and site

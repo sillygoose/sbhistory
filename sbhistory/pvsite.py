@@ -282,7 +282,9 @@ class Site:
         except Exception as e:
             print(e)
             return
+
         try:
+            _LOGGER.info(f"Processing files from {directory}")
             for entry in os.scandir(directory):
                 if not entry.is_file():
                     continue
@@ -295,6 +297,8 @@ class Site:
                     _LOGGER.info(f"Processing file {entry.name}")
                     reader = csv.reader(csvfile, delimiter=',', quotechar='|')
                     for row in reader:
+                        if len(row) == 0:
+                            break
                         if reader.line_num == 1:
                             to_find = ['Date', 'Time', 'Tpv', 'Ta', 'Irr', 'Irr Unit', 'Temp Unit']
                             for heading in to_find:

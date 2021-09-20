@@ -8,16 +8,16 @@ import signal
 import logging
 
 
-_LOGGER = logging.getLogger("sbhistory")
+_LOGGER = logging.getLogger('sbhistory')
 
 
 __all__ = [
-    "SIGNAL_TRANSLATION_MAP",
+    'SIGNAL_TRANSLATION_MAP',
 ]
 
 SIGNAL_TRANSLATION_MAP = {
-    signal.SIGINT: "SIGINT",
-    signal.SIGTERM: "SIGTERM",
+    signal.SIGINT: 'SIGINT',
+    signal.SIGTERM: 'SIGTERM',
 }
 
 

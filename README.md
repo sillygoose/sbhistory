@@ -1,8 +1,8 @@
 # sbhistory
-Application to pull Sunny Boy inverter history and send to a InfluxDB 2.x database (InfluxDB 1.8.x is also supported).  Additional options to model irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
+Application to pull Sunny Boy inverter data from one or more inverters and send to a InfluxDB 2.x database (InfluxDB 1.8.x is also supported).  Additional features allow modeling irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
 
 ## Installation
-Python 3.7 or better is required, you can then install the Python requirements for this application:
+Python 3.9 or better is required, you can then install the Python requirements for this application:
 ```
     git clone https://github.com/sillygoose/sbhistory
     cd sbhistory
@@ -10,18 +10,18 @@ Python 3.7 or better is required, you can then install the Python requirements f
 ```
 
 ## Use
-Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for the data will be uploading.
+Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for the data.
 
-Rename the `sample_secrets.yaml` file to `secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  The `secrets.yaml` file is tagged in the `.gitignore` file and will not be included in the repository but if you wish you can put `secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
+Rename the `sample_secrets.yaml` file to `secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  The `secrets.yaml` file is tagged in `.gitignore` and will not be included in the repository but if you wish you can put `secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
 
-Run the application from the command line using Python 3.9 or later:
+Run the application in VS Code or from the command line using Python 3.9 or later:
 
 ```
     cd sbhistory
     python3 sbhistory.py
 ```
 
-## Outputs
+## InfluxDB Outputs
 Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version the following outputs can be selected to be sent on to InfluxDB:
 - daily_history
 
