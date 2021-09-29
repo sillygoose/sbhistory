@@ -103,7 +103,7 @@ def main():
 
 
 if __name__ == '__main__':
-    if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
+    if sys.version_info[0] >= 3 and sys.version_info[1] >= 8:
         main()
     else:
         print("python 3.8 or better required")
