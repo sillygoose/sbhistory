@@ -2,7 +2,7 @@
 Application to pull Sunny Boy inverter data from one or more inverters and send to a InfluxDB 2.x database (InfluxDB 1.8.x is also supported).  Additional features allow modeling irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
 
 ## Installation
-Python 3.9 or better is required, you can then install the Python requirements for this application:
+Python 3.8 or better is required, you can then install the Python requirements for this application:
 ```
     git clone https://github.com/sillygoose/sbhistory
     cd sbhistory
@@ -14,7 +14,7 @@ Make sure your InfluxDB database has an infinite retention policy, or at least l
 
 Rename the `sample_secrets.yaml` file to `secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  The `secrets.yaml` file is tagged in `.gitignore` and will not be included in the repository but if you wish you can put `secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
 
-Run the application in VS Code or from the command line using Python 3.9 or later:
+Run the application in VS Code or from the command line:
 
 ```
     cd sbhistory

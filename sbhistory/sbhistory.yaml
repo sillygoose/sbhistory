@@ -10,16 +10,16 @@ sbhistory:
   #   - csv_file imports Seaboard meter CSV irradiance files
   daily_history:
     enable: True
-    start: '2021-09-01'
+    start: '2020-07-01'
 
   # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
     enable: True
     #start: 'recent'
-    start:  '2021-09-01'
+    start:  '2021-08-01'
 
   irradiance:
-    enable: False
+    enable: True
     start:  '2021-09-01'
 
   csv_file:
@@ -75,7 +75,7 @@ multisma2:
     enable: True
     org:    !secret influxdb2_org
     url:    http://dundee.local:8086    # influxdb2_url
-    bucket: sbhistory                   # influxdb2_bucket
+    bucket: multisma2                      # influxdb2_bucket
     token:  !secret influxdb2_token
 
   # MQTT setup

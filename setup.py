@@ -4,7 +4,7 @@
 from pathlib import Path
 from setuptools import setup
 
-VERSION = "0.8.0"
+VERSION = "1.0.0"
 URL = "https://github.com/sillygoose/sbhistory"
 
 setup(

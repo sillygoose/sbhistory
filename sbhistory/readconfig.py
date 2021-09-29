@@ -178,7 +178,8 @@ def check_required_keys(yaml, required, path='') -> bool:
                         passed = False
 
                     if isinstance(requiredSubkeys, list):
-                        passed = check_required_keys(yamlValue, requiredSubkeys, path) and passed
+                        if len(requiredSubkeys):
+                            passed = check_required_keys(yamlValue, requiredSubkeys, path) and passed
                     else:
                         raise FailedInitialization(Exception('Unexpected YAML checking error'))
             elif isinstance(yaml, dict) or isinstance(yaml, Configuration):
@@ -198,7 +199,8 @@ def check_required_keys(yaml, required, path='') -> bool:
                     passed = False
 
                 if isinstance(requiredSubkeys, list):
-                    passed = check_required_keys(yamlValue, requiredSubkeys, currentpath) and passed
+                    if len(requiredSubkeys):
+                        passed = check_required_keys(yamlValue, requiredSubkeys, currentpath) and passed
                 else:
                     raise FailedInitialization(Exception('Unexpected YAML checking error'))
             else:
@@ -323,10 +325,12 @@ def check_config(config):
                                   ]}},
                               ]}},
                               {'settings': {'required': False, 'keys': [
-                                  {'fast_rate': {'required': False, 'keys': [], 'type': int}},
-                                  {'medium_rate': {'required': False, 'keys': [], 'type': int}},
-                                  {'slow_rate': {'required': False, 'keys': [], 'type': int}},
-                                  {'turtle_rate': {'required': False, 'keys': [], 'type': int}},
+                                  {'sampling': {'required': False, 'keys': [
+                                      {'fast': {'required': False, 'keys': [], 'type': int}},
+                                      {'medium': {'required': False, 'keys': [], 'type': int}},
+                                      {'slow': {'required': False, 'keys': [], 'type': int}},
+                                      {'night': {'required': False, 'keys': [], 'type': int}},
+                                  ]}},
                               ]}},
                           ],
                           },
@@ -360,4 +364,4 @@ if __name__ == '__main__':
     if sys.version_info[0] >= 3 and sys.version_info[1] >= 9:
         config = read_config()
     else:
-        print("python 3.9 or better required")
+        print("python 3.8 or better required")
