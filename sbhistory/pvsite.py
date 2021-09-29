@@ -9,8 +9,6 @@ import datetime
 import clearsky
 import csv
 
-# from pprint import pprint
-
 from inverter import Inverter
 from influx import InfluxDB
 
@@ -195,6 +193,9 @@ class Site:
                         for inverter in self._inverters
                     )
                 )
+                if None in inverters:
+                    _LOGGER.debug(f"At least one inverter failed to respond")
+                    continue
                 # await self.stop_inverters()
 
                 for inverter in inverters:

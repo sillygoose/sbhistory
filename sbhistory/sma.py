@@ -14,7 +14,7 @@ from aiohttp import client_exceptions
 from exceptions import SmaException
 
 
-_LOGGER = logging.getLogger('multisma2')
+_LOGGER = logging.getLogger('sbhistory')
 
 USERS = {'user': 'usr', 'installer': 'istl'}
 

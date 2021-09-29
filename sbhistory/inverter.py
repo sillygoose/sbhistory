@@ -26,15 +26,17 @@ class Inverter:
         # SMA class object for access to inverters
         try:
             self._sma = sma.SMA(session=self._session, url=self._url, password=self._password, group=self._group)
-        except SmaException:
+        except SmaException as e:
+            _LOGGER.debug(f"Inverter error with '{self._url}': '{e.name}'")
             return False
 
-        await self._sma.new_session()
-        if self._sma.sma_sid is None:
-            _LOGGER.info('%s - no session ID', self._name)
+        try:
+            await self._sma.new_session()
+            print(f"Connected to SMA inverter {self._name} at {self._url}")
+            return True
+        except SmaException as e:
+            _LOGGER.debug(f"{self._name}, login failed: {e}")
             return False
-        print(f"Connected to SMA inverter {self._name} at {self._url}")
-        return True
 
     async def close(self):
         """Log out of the inverter."""
@@ -44,12 +46,20 @@ class Inverter:
 
     async def read_history(self, start, stop):
         """Read the baseline inverter production."""
-        history = await self._sma.read_history(start, stop)
-        history.insert(0, {'inverter': self._name})
-        return history
+        try:
+            history = await self._sma.read_history(start, stop)
+            history.insert(0, {'inverter': self._name})
+            return history
+        except SmaException as e:
+            _LOGGER.error(f"Inverter '{self._url}' read_history(): '{e.name}'")
+            return None
 
     async def read_fine_history(self, start, stop):
         """Read the baseline inverter production."""
-        history = await self._sma.read_fine_history(start, stop)
-        history.insert(0, {'inverter': self._name})
-        return history
+        try:
+            history = await self._sma.read_fine_history(start, stop)
+            history.insert(0, {'inverter': self._name})
+            return history
+        except SmaException as e:
+            _LOGGER.error(f"Inverter '{self._url}' read_history(): '{e.name}'")
+            return None
