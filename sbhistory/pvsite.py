@@ -55,6 +55,17 @@ class Site:
         await asyncio.gather(*(inverter.close() for inverter in self._inverters))
 
     # daily totals, day increments
+    async def populate_production(self, config):
+        if not config.sbhistory.production.enable:
+            return
+        try:
+            start = datetime.datetime.fromisoformat(config.sbhistory.production.start)
+            stop = datetime.datetime.fromisoformat(config.sbhistory.production.stop)
+        except Exception as e:
+            print(e)
+            return
+
+    # daily totals, day increments
     async def populate_daily_history(self, config):
         if not config.sbhistory.daily_history.enable:
             return
@@ -351,7 +362,8 @@ class Site:
 
     async def run(self):
         config = self._config
-        await self.populate_irradiance(config)
-        await self.populate_csv_file(config)
-        await self.populate_daily_history(config)
-        await self.populate_fine_history(config)
+        await self.populate_production(config)
+        # await self.populate_irradiance(config)
+        # await self.populate_csv_file(config)
+        # await self.populate_daily_history(config)
+        # await self.populate_fine_history(config)

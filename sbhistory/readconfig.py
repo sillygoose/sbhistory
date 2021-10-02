@@ -260,6 +260,11 @@ def check_config(config):
         {
             'sbhistory': {'required': True, 'keys':
                           [
+                              {'production': {'required': True, 'keys': [
+                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
+                                  {'start': {'required': True, 'keys': [], 'type': str}},
+                                  {'stop': {'required': True, 'keys': [], 'type': str}},
+                              ]}},
                               {'daily_history': {'required': True, 'keys': [
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},
                                   {'start': {'required': True, 'keys': [], 'type': str}},

@@ -4,21 +4,27 @@
 
 sbhistory:
   # Select the outputs you want to populate the database
+  #   - production is the inverter dauily, monthly, and annual production
   #   - daily_history is the inverter Wh meter in daily increments
   #   - fine_history is Wh meter in 5 minute increments (limited inverter history)
   #   - irradiance_history is an estimate of local irradiation (W)
   #   - csv_file imports Seaboard meter CSV irradiance files
+  production:
+    enable: False
+    start: '2020-01-01'
+    stop: '2021-10-01'
+
   daily_history:
-    enable: True
+    enable: False
     start: '2020-07-01'
 
   # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
-    enable: True
+    enable: False
     start:  '2021-08-01'
 
   irradiance:
-    enable: True
+    enable: False
     start:  '2021-09-01'
 
   csv_file:
