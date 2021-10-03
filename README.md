@@ -1,6 +1,12 @@
-# sbhistory
+## sbhistory
 Application to pull Sunny Boy inverter data from one or more inverters and send to a InfluxDB 2.x database (InfluxDB 1.8.x is also supported).  Additional features allow modeling irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
 
+#
+## What's new
+#### 1.1.0
+- new `production` option, this will query the SMA inverter(s) and write daily, monthly, and tearly totals to InfluxDB2.
+
+#
 ## Installation
 Python 3.8 or better is required, you can then install the Python requirements for this application:
 ```
@@ -9,6 +15,7 @@ Python 3.8 or better is required, you can then install the Python requirements f
     pip3 install -e .
 ```
 
+#
 ## Use
 Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for the data.
 
@@ -21,17 +28,26 @@ Run the application in VS Code or from the command line:
     python3 sbhistory.py
 ```
 
+#
 ## InfluxDB Outputs
 Outputs are one per inverter, and if there is more than one inverter in your site, a site-wide value named `site` is created from the sum of the inverter outputs.  In the current version the following outputs can be selected to be sent on to InfluxDB:
-- daily_history
+- production
 
-    `daily history` is the inverter(s) total Wh meter recorded at midnight (local time) each day:
-
-        InfluxDB total Wh schema:
+    `production` is the inverter(s) production in kWh for a day, month, or year:
 
         _measurement    production
         _inverter       inverter name(s), site
-        _field          midnight
+        _field          today (kWh), month (kWh), year (kWh)
+
+    Measurments are written at midnight on the given period and running totals are updated by **multisma2**.
+
+- daily_history
+
+    `daily_history` is the value of theinverter(s) total Wh meter recorded at midnight (local time) each day:
+
+        _measurement    production
+        _inverter       inverter name(s), site
+        _field          midnight (Wh)
 
     This measurement makes finding the production for a day, month, year, or any period the difference between the two selected records.
 
@@ -39,13 +55,11 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     `fine history `is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
 
-        InfluxDB total Wh schema:
-
         _measurement    production
         _inverter       inverter name(s), site
-        _field          total_wh
+        _field          total_wh (Wh)
 
-    Like the daily_history, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
+    Like `daily_history`, production for a period is just a subtraction. But if you want to see the power in watts for a period you have to do some math. See the Flux `irradiance` script for how this is accomplished.
 
     NOTE: There is only limited production history stored on an inverter.
 
@@ -53,11 +67,9 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     The `irradiance` output is the estimated solar radiation (W/m<sup>2</sup>) available at a specific time on a collector with a fixed azimuth and tilt.  This varies through the year and takes into account the location, moisture (cold winter air holds less moisture than warm air), dust, and other seasonal effects.
 
-        InfluxDB irradiance schema:
-
         _measurement    sun
         _field          irradiance
-        _type           modeled
+        _type           modeled (W/m²)
 
     You can use the irradiance to estimate the solar potential for your PV array by multiplying the irradiance by the area of the array (in m<sup>2</sup>) and the unitless efficiency, i.e., a 300W panel with an area of 2 m<sup>2</sup> has an efficiency of 0.15.
 
@@ -67,26 +79,17 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     The `seaward` output reads log files from the Seaward Solar Survey 200R Irradiance Meter, this became an essential tool to verify the irradiance model with the actual solar flux hitting the panels (turned out to be very accurate without any further adjustment):
 
-        InfluxDB irradiance schema:
-
         _measurement    sun
         _field          irradiance
-        _type           measured
-
-        InfluxDB panel temperature schema:
+        _type           measured (W/m²)
 
         _measurement    sun
         _field          temperature
-        _type           working
-
-        InfluxDB ambient temperature schema:
-
-        _measurement    sun
-        _field          temperature
-        _type           ambient
+        _type           working (°C), ambient (°C)
 
     When enabled this will process every .csv file in the `path` option and write the results to InfluxDB.
 
+#
 ## Errors
 If you happen to make errors and get locked out of your inverters (confirm by being unable to log into an inverter using the WebConnect browser interface), the Sunny Boy inverters can be reset by
 
@@ -96,6 +99,7 @@ If you happen to make errors and get locked out of your inverters (confirm by be
 - restore DC power via each rotary switch
 - restore grid power via breakers
 
+#
 ## Thanks
 Thanks for the following packages used to build this software:
 - PYSMA library for WebConnect
