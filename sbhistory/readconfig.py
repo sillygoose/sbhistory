@@ -268,6 +268,7 @@ def check_config(config):
                               {'daily_history': {'required': True, 'keys': [
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},
                                   {'start': {'required': True, 'keys': [], 'type': str}},
+                                  {'stop': {'required': False, 'keys': [], 'type': str}},
                               ]}},
                               {'fine_history': {'required': True, 'keys': [
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},

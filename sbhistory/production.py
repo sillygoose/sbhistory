@@ -1,9 +1,6 @@
 """"""
 
 import logging
-import datetime
-
-from inverter import Inverter
 
 _LOGGER = logging.getLogger('sbhistory')
 

@@ -13,6 +13,7 @@ from astral import LocationInfo
 
 import clearsky
 import production
+import dailyhistory
 
 from inverter import Inverter
 from influx import InfluxDB
@@ -130,18 +131,17 @@ class Site:
         if not config.sbhistory.daily_history.enable:
             return
         try:
-            start = datetime.datetime.fromisoformat(config.sbhistory.daily_history.start)
+            start = dateutil.parser.parse(config.sbhistory.daily_history.start)
+            if config.sbhistory.daily_history.get('stop', None):
+                stop = dateutil.parser.parse(config.sbhistory.daily_history.stop)
+            else:
+                stop = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
         except Exception as e:
             print(e)
             return
 
-        now = datetime.datetime.now()
-        td = datetime.timedelta(hours=1)
-        od = datetime.timedelta(days=1)
-
-        start = start - td
-        stop = datetime.datetime(year=now.year, month=now.month, day=now.day)
-        stop += od
+        start = start - datetime.timedelta(hours=1)
+        stop += datetime.timedelta(days=1)
         _LOGGER.info(f"Populating daily history values from {start.date()} to {stop.date()}")
 
         if await self.start_inverters():
@@ -155,77 +155,9 @@ class Site:
         else:
             return
 
-        for inverter in inverters:
-            t = inverter[1]['t']
-            dt = datetime.datetime.fromtimestamp(t)
-            date = start.date()
-            end_date = datetime.date(year=dt.year, month=dt.month, day=dt.day)
-            delta = datetime.timedelta(days=1)
-
-            # add missing dates as 0 Wh values
-            while date < end_date:
-                print('.', end='', flush=True)
-                newtime = datetime.datetime.combine(date, datetime.time(0, 0))
-                t = int(newtime.timestamp())
-                inverter.append({'t': t, 'v': 0})
-                date += delta
-
-            # Sort the entries by date
-            try:
-                inv0 = inverter
-                inv_name = inv0.pop(0)
-                inv0.sort(key=lambda item: item.get('t'))
-                inv0.insert(0, inv_name)
-            except Exception as e:
-                print(e)
-
-            # normalize times to midnight
-            midnight = datetime.time()
-            for i in range(1, len(inverter)):
-                t = inverter[i]['t']
-                v = inverter[i]['v']
-                dt = datetime.datetime.fromtimestamp(t)
-                if dt.hour > 12:
-                    new_day = dt.date() + datetime.timedelta(days=1)
-                    new_dt = datetime.datetime.combine(new_day, midnight)
-                    inverter[i]['t'] = int(new_dt.timestamp())
-                else:
-                    new_day = dt.date()
-                    new_dt = datetime.datetime.combine(new_day, midnight)
-                    inverter[i]['t'] = int(new_dt.timestamp())
-
-        # Calculate the total
-        total = {}
-        count = {}
-        for inverter in inverters:
-            last_non_null = None
-            for i in range(1, len(inverter)):
-                print('.', end='', flush=True)
-                t = inverter[i]['t']
-                v = inverter[i]['v']
-                if v is None:
-                    if not last_non_null:
-                        continue
-                    v = last_non_null
-                    inverter[i]['v'] = last_non_null
-
-                total[t] = v + total.get(t, 0)
-                count[t] = count.get(t, 0) + 1
-                last_non_null = v
-
-        # Site output if multiple inverters
-        if len(inverters) > 1:
-            site_total = []
-            for t, v in total.items():
-                if count[t] == len(inverters):
-                    site_total.append({'t': t, 'v': v})
-            site_total.insert(0, {'inverter': 'site'})
-            inverters.append(site_total)
-
+        inverters = dailyhistory.process(inverters, start=start)
         self._influx.write_history(inverters, 'production/midnight')
-        print()
 
-    # fine production, 5 minute increments
     async def populate_fine_history(self, config):
         if not config.sbhistory.fine_history.enable:
             return
