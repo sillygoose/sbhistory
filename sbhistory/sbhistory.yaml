@@ -10,7 +10,7 @@ sbhistory:
   #   - 'irradiance' is an estimate of local irradiation (W/m²) at the panel surface
   #   - 'seaward' imports Seaboard meter CSV irradiance files
   production:
-    enable: False
+    enable: True
     start: '2021-08-01'
     stop: '2021-10-04'
 
@@ -21,15 +21,15 @@ sbhistory:
 
   # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
-    enable: False
+    enable: True
     start:  '2021-08-01'
 
   irradiance:
-    enable: False
+    enable: True
     start:  '2021-09-01'
 
   seaward:
-    enable: False
+    enable: True
     path:   !secret sbhistory_seaward_file_path
 
 

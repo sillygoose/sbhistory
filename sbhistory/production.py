@@ -1,4 +1,4 @@
-""""""
+"""Process daily. monthly, and yearly kWh production."""
 
 import logging
 
