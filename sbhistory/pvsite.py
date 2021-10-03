@@ -88,7 +88,7 @@ class Site:
             elif period == 'month':
                 next = current + relativedelta(months=1)
             else:
-                next = current + relativedelta(days=1)
+                next = current + datetime.timedelta(days=1, hours=2)
 
             start_ts = int(current.timestamp())
             stop_ts = int(next.timestamp())
@@ -96,15 +96,20 @@ class Site:
                 inverters = await asyncio.gather(*(inverter.read_history(start=start_ts, stop=stop_ts) for inverter in self._inverters))
                 await self.stop_inverters()
             else:
-                _LOGGER.error(f"Unable to connect to the inverters")
                 return
 
             results = production.process(inverters)
-            if results:
-                combined[start_ts] = results
+            if results is None:
+                _LOGGER.debug(f"{current}: failed to retrieve inverter data")
             else:
-                _LOGGER.error(f"{current}: something is wrong!")
-            current = next
+                combined[start_ts] = results
+
+            if period == 'year':
+                current = next
+            elif period == 'month':
+                current = next
+            else:
+                current += datetime.timedelta(days=1)
             print('.', end='', flush=True)
         print()
         production.write(influxdb=self._influx, points=combined, period=period)
@@ -119,8 +124,7 @@ class Site:
             _LOGGER.error(f"Unexpected exception: {e}")
             return
 
-        # await self.populate_daily_production(start, stop)
-        periods = ['month', 'year', 'today']
+        periods = ['today', 'month', 'year']
         for period in periods:
             await self.production_worker(start, stop, period)
 

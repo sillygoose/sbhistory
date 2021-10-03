@@ -31,7 +31,7 @@ def process(inverter_results):
             site_wh += wh
             results[name] = wh / 1000
         else:
-            _LOGGER.info(f"Inverter '{name}' missing data ")
+            _LOGGER.debug(f"Inverter '{name}' missing data ")
             return None
     results['site'] = site_wh / 1000
     return results

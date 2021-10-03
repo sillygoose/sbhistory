@@ -11,8 +11,8 @@ sbhistory:
   #   - seaward imports Seaboard meter CSV irradiance files
   production:
     enable: True
-    start: '2021-06-01'
-    stop: '2021-08-03'
+    start: '2020-07-01'
+    stop: '2021-10-04'
 
   daily_history:
     enable: False
