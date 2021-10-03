@@ -104,12 +104,7 @@ class Site:
             else:
                 combined[start_ts] = results
 
-            if period == 'year':
-                current = next
-            elif period == 'month':
-                current = next
-            else:
-                current += datetime.timedelta(days=1)
+            current = current + datetime.timedelta(days=1) if period == 'today' else next
             print('.', end='', flush=True)
         print()
         production.write(influxdb=self._influx, points=combined, period=period)
@@ -119,7 +114,10 @@ class Site:
             return
         try:
             start = dateutil.parser.parse(config.sbhistory.production.start)
-            stop = dateutil.parser.parse(config.sbhistory.production.stop)
+            if config.sbhistory.production.get('stop', None):
+                stop = dateutil.parser.parse(config.sbhistory.production.stop)
+            else:
+                stop = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
         except Exception as e:
             _LOGGER.error(f"Unexpected exception: {e}")
             return
@@ -224,7 +222,6 @@ class Site:
             site_total.insert(0, {'inverter': 'site'})
             inverters.append(site_total)
 
-        print(inverters)
         self._influx.write_history(inverters, 'production/midnight')
         print()
 

@@ -263,7 +263,7 @@ def check_config(config):
                               {'production': {'required': True, 'keys': [
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},
                                   {'start': {'required': True, 'keys': [], 'type': str}},
-                                  {'stop': {'required': True, 'keys': [], 'type': str}},
+                                  {'stop': {'required': False, 'keys': [], 'type': str}},
                               ]}},
                               {'daily_history': {'required': True, 'keys': [
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},
