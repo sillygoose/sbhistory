@@ -66,8 +66,6 @@ class Site:
         await asyncio.gather(*(inverter.close() for inverter in self._inverters))
 
     async def production_worker(self, start, stop, period):
-        _LOGGER.info(f"Populating '{period}' production values from {start.date()} to {stop.date()}")
-
         if period == 'year':
             current = start.replace(month=1, day=1)
             stop = stop.replace(month=1, day=1) + relativedelta(years=1)
@@ -81,6 +79,7 @@ class Site:
             _LOGGER.error(f"Unsupported period type: '{period}'")
             return
 
+        _LOGGER.info(f"Populating '{period}' production values from {current.date()} to {stop.date()}")
         combined = {}
         while current < stop:
             if period == 'year':

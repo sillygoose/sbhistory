@@ -12,7 +12,7 @@ sbhistory:
   production:
     enable: True
     start: '2021-08-01'
-    stop: '2021-10-04'
+    stop: '2021-09-01'
 
   daily_history:
     enable: True
@@ -21,15 +21,15 @@ sbhistory:
 
   # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
-    enable: True
+    enable: False
     start:  '2021-08-01'
 
   irradiance:
-    enable: True
+    enable: False
     start:  '2021-09-01'
 
   seaward:
-    enable: True
+    enable: False
     path:   !secret sbhistory_seaward_file_path
 
 
