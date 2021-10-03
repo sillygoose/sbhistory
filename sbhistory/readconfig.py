@@ -277,7 +277,7 @@ def check_config(config):
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},
                                   {'start': {'required': True, 'keys': [], 'type': str}},
                               ]}},
-                              {'csv_file': {'required': False, 'keys': [
+                              {'seaward': {'required': False, 'keys': [
                                   {'enable': {'required': True, 'keys': [], 'type': bool}},
                                   {'path': {'required': True, 'keys': [], 'type': str}},
                               ]}},

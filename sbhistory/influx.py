@@ -29,6 +29,9 @@ LP_LOOKUP = {
     'status/condition': {'measurement': 'status', 'tags': ['_inverter'], 'field': 'condition'},
     'production/total_wh': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'total_wh'},
     'production/midnight': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'midnight'},
+    'production/today': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'today'},
+    'production/month': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'month'},
+    'production/year': {'measurement': 'production', 'tags': ['_inverter'], 'field': 'year'},
     'sun/position': {'measurement': 'sun', 'tags': None, 'field': None},
     'sun/irradiance': {'measurement': 'sun', 'tags': ['_type'], 'field': 'irradiance'},
 }

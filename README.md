@@ -63,9 +63,9 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
     Keep in mind it is just a best guess since other factors such as diffuse and reflected radiation for a site are harder to quantify.
 
-- csv_file
+- seaward
 
-    The `csv_file` output reads log files from the Seaward Solar Survey 200R Irradiance Meter, this became an essential tool to verify the irradiance model with the actual solar flux hitting the panels (turned out to be very accurate without any further adjustment):
+    The `seaward` output reads log files from the Seaward Solar Survey 200R Irradiance Meter, this became an essential tool to verify the irradiance model with the actual solar flux hitting the panels (turned out to be very accurate without any further adjustment):
 
         InfluxDB irradiance schema:
 

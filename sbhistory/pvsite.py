@@ -5,15 +5,17 @@ import asyncio
 import logging
 import dateutil
 import datetime
-
-import clearsky
+from dateutil.relativedelta import relativedelta
 import csv
-
-from inverter import Inverter
-from influx import InfluxDB
 
 from astral.sun import sun
 from astral import LocationInfo
+
+import clearsky
+import production
+
+from inverter import Inverter
+from influx import InfluxDB
 
 
 _LOGGER = logging.getLogger('sbhistory')
@@ -48,24 +50,80 @@ class Site:
         self._influx.stop()
 
     async def start_inverters(self):
-        results = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
-        return False not in results
+        inverters = await asyncio.gather(*(inverter.initialize() for inverter in self._inverters))
+        success = True
+        for inverter in inverters:
+            error = inverter.get('error', None)
+            if error is None or len(error) > 0:
+                _LOGGER.error(
+                    f"Connection to inverter '{inverter.get('name')}' failed: {inverter.get('error', 'None')}")
+                success = False
+        if not success:
+            return False
+        return True
 
     async def stop_inverters(self):
         await asyncio.gather(*(inverter.close() for inverter in self._inverters))
 
-    # daily totals, day increments
+    async def production_worker(self, start, stop, period):
+        _LOGGER.info(f"Populating '{period}' production values from {start.date()} to {stop.date()}")
+
+        if period == 'year':
+            current = start.replace(month=1, day=1)
+            stop = stop.replace(month=1, day=1) + relativedelta(years=1)
+        elif period == 'month':
+            current = start.replace(day=1)
+            stop = stop.replace(day=1) + relativedelta(months=1)
+        elif period == 'today':
+            current = start
+            stop = stop + relativedelta(days=1)
+        else:
+            _LOGGER.error(f"Unsupported period type: '{period}'")
+            return
+
+        combined = {}
+        while current < stop:
+            if period == 'year':
+                next = current + relativedelta(years=1)
+            elif period == 'month':
+                next = current + relativedelta(months=1)
+            else:
+                next = current + relativedelta(days=1)
+
+            start_ts = int(current.timestamp())
+            stop_ts = int(next.timestamp())
+            if await self.start_inverters():
+                inverters = await asyncio.gather(*(inverter.read_history(start=start_ts, stop=stop_ts) for inverter in self._inverters))
+                await self.stop_inverters()
+            else:
+                _LOGGER.error(f"Unable to connect to the inverters")
+                return
+
+            results = production.process(inverters)
+            if results:
+                combined[start_ts] = results
+            else:
+                _LOGGER.error(f"{current}: something is wrong!")
+            current = next
+            print('.', end='', flush=True)
+        print()
+        production.write(influxdb=self._influx, points=combined, period=period)
+
     async def populate_production(self, config):
         if not config.sbhistory.production.enable:
             return
         try:
-            start = datetime.datetime.fromisoformat(config.sbhistory.production.start)
-            stop = datetime.datetime.fromisoformat(config.sbhistory.production.stop)
+            start = dateutil.parser.parse(config.sbhistory.production.start)
+            stop = dateutil.parser.parse(config.sbhistory.production.stop)
         except Exception as e:
-            print(e)
+            _LOGGER.error(f"Unexpected exception: {e}")
             return
 
-    # daily totals, day increments
+        # await self.populate_daily_production(start, stop)
+        periods = ['month', 'year', 'today']
+        for period in periods:
+            await self.production_worker(start, stop, period)
+
     async def populate_daily_history(self, config):
         if not config.sbhistory.daily_history.enable:
             return
@@ -162,6 +220,7 @@ class Site:
             site_total.insert(0, {'inverter': 'site'})
             inverters.append(site_total)
 
+        print(inverters)
         self._influx.write_history(inverters, 'production/midnight')
         print()
 
@@ -286,12 +345,12 @@ class Site:
             _LOGGER.error(f"An exception occurred in populate_irradiance(): {e}")
 
     async def populate_csv_file(self, config):
-        if not config.sbhistory.csv_file.enable:
+        if not config.sbhistory.seaward.enable:
             return
         try:
             site_properties = config.multisma2.site
             tzinfo = dateutil.tz.gettz(site_properties.tz)
-            directory = config.sbhistory.csv_file.path
+            directory = config.sbhistory.seaward.path
         except Exception as e:
             print(e)
             return
@@ -363,7 +422,7 @@ class Site:
     async def run(self):
         config = self._config
         await self.populate_production(config)
-        # await self.populate_irradiance(config)
-        # await self.populate_csv_file(config)
-        # await self.populate_daily_history(config)
-        # await self.populate_fine_history(config)
+        await self.populate_irradiance(config)
+        await self.populate_csv_file(config)
+        await self.populate_daily_history(config)
+        await self.populate_fine_history(config)

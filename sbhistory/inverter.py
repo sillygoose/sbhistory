@@ -28,15 +28,15 @@ class Inverter:
             self._sma = sma.SMA(session=self._session, url=self._url, password=self._password, group=self._group)
         except SmaException as e:
             _LOGGER.debug(f"Inverter error with '{self._url}': '{e.name}'")
-            return False
+            return {'name': self._url, 'error': e.name}
 
         try:
             await self._sma.new_session()
-            print(f"Connected to SMA inverter {self._name} at {self._url}")
-            return True
+            _LOGGER.debug(f"Connected to SMA inverter {self._name} at {self._url}")
+            return {'name': self._url, 'error': ''}
         except SmaException as e:
             _LOGGER.debug(f"{self._name}, login failed: {e}")
-            return False
+            return {'name': self._url, 'error': e.name}
 
     async def close(self):
         """Log out of the inverter."""
