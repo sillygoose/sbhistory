@@ -1,7 +1,6 @@
 # Edit this file to reflect your site details, the sbhistory software uses
 # the site, solar properties, database, and inverter settings from multisma2 and adds
 # a few of its own for controlling the optional outputs.
-
 sbhistory:
   # Select the outputs you want to populate the database
   #   - 'production' is the inverter daily, monthly, and annual production
@@ -11,22 +10,20 @@ sbhistory:
   #   - 'seaward' imports Seaboard meter CSV irradiance files
   production:
     enable: True
-    start: '2021-08-01'
-    stop: '2021-09-01'
+    start: '2020-06-01'
+    stop: '2021-10-06'
 
   daily_history:
     enable: True
-    start: '2021-08-01'
-    stop: '2021-09-01'
+    start: '2020-06-01'
 
-  # If enabled 'start' can be an ISO date or 'recent' for the last few total_wh measurements
   fine_history:
     enable: False
-    start:  '2021-08-01'
+    start:  '2021-10-01'
 
   irradiance:
     enable: False
-    start:  '2021-09-01'
+    start:  '2021-10-01'
 
   seaward:
     enable: False
@@ -84,8 +81,8 @@ multisma2:
   influxdb2:
     enable: True
     org:    !secret influxdb2_org
-    url:    http://dundee.local:8086
-    bucket: multisma2
+    url:    !secret influxdb2_url
+    bucket: !secret influxdb2_bucket
     token:  !secret influxdb2_token
 
   # Inverter setup

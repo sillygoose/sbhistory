@@ -16,17 +16,17 @@ from typing import Dict, List, TextIO, TypeVar, Union
 from exceptions import FailedInitialization
 
 
-CONFIG_YAML = "sbhistory.yaml"
-SECRET_YAML = "secrets.yaml"
+CONFIG_YAML = 'sbhistory.yaml'
+SECRET_YAML = '.sbhistory_secrets.yaml'
 
 JSON_TYPE = Union[List, Dict, str]  # pylint: disable=invalid-name
 DICT_T = TypeVar("DICT_T", bound=Dict)  # pylint: disable=invalid-name
 
-_LOGGER = logging.getLogger("sbhistory")
-__SECRET_CACHE: Dict[str, JSON_TYPE] = {}
+_LOGGER = logging.getLogger('sbhistory')
+_SECRET_CACHE: Dict[str, JSON_TYPE] = {}
 
 
-def buildYAMLExceptionString(exception, file='multisma2'):
+def buildYAMLExceptionString(exception, file='sbhistory'):
     e = exception
     try:
         type = ''
@@ -54,14 +54,14 @@ def buildYAMLExceptionString(exception, file='multisma2'):
 
         errmsg = f"YAML file error {type}in {file}:{line}, column {column}: {info}"
 
-    except Exception:
-        errmsg = f"YAML file error and no idea how it is encoded."
+    except Exception as e:
+        errmsg = f"YAML file error: {e}"
 
     return errmsg
 
 
 class ConfigError(Exception):
-    """General YAML configurtion file exception."""
+    """General YAML configuration file exception."""
 
 
 class FullLineLoader(yaml.FullLoader):
@@ -81,7 +81,7 @@ def load_yaml(fname: str) -> JSON_TYPE:
         with open(fname, encoding="utf-8") as conf_file:
             return parse_yaml(conf_file)
     except UnicodeDecodeError as exc:
-        _LOGGER.error("Unable to read file %s: %s", fname, exc)
+        _LOGGER.error(f"Unable to read '{fname}': {exc}")
         raise ConfigError(exc) from exc
 
 
@@ -99,8 +99,8 @@ def parse_yaml(content: Union[str, TextIO]) -> JSON_TYPE:
 def _load_secret_yaml(secret_path: str) -> JSON_TYPE:
     """Load the secrets yaml from path."""
     secret_path = os.path.join(secret_path, SECRET_YAML)
-    if secret_path in __SECRET_CACHE:
-        return __SECRET_CACHE[secret_path]
+    if secret_path in _SECRET_CACHE:
+        return _SECRET_CACHE[secret_path]
 
     _LOGGER.debug("Loading %s", secret_path)
     try:
@@ -111,15 +111,14 @@ def _load_secret_yaml(secret_path: str) -> JSON_TYPE:
     except FileNotFoundError:
         secrets = {}
 
-    __SECRET_CACHE[secret_path] = secrets
+    _SECRET_CACHE[secret_path] = secrets
     return secrets
 
 
 def secret_yaml(loader: FullLineLoader, node: yaml.nodes.Node) -> JSON_TYPE:
     """Load secrets and embed it into the configuration YAML."""
     if os.path.basename(loader.name) == SECRET_YAML:
-        _LOGGER.error("secrets.yaml: attempt to load secret from within secrets file")
-        raise ConfigError("secrets.yaml: attempt to load secret from within secrets file")
+        raise ConfigError(f"{SECRET_YAML}: attempt to load secret from within secrets file")
 
     secret_path = os.path.dirname(loader.name)
     home_path = str(Path.home())
@@ -128,11 +127,7 @@ def secret_yaml(loader: FullLineLoader, node: yaml.nodes.Node) -> JSON_TYPE:
     while True:
         secrets = _load_secret_yaml(secret_path)
         if node.value in secrets:
-            _LOGGER.debug(
-                "Secret %s retrieved from secrets.yaml in folder %s",
-                node.value,
-                secret_path,
-            )
+            _LOGGER.debug(f"Secret '{node.value}' retrieved from {secret_path}/{SECRET_YAML}")
             return secrets[node.value]
 
         if not do_walk or (secret_path == home_path):
@@ -202,9 +197,9 @@ def check_required_keys(yaml, required, path='') -> bool:
                     if len(requiredSubkeys):
                         passed = check_required_keys(yamlValue, requiredSubkeys, currentpath) and passed
                 else:
-                    raise FailedInitialization(Exception('Unexpected YAML checking error'))
+                    raise FailedInitialization('Unexpected YAML checking error')
             else:
-                raise FailedInitialization(Exception('Unexpected YAML checking error'))
+                raise FailedInitialization('Unexpected YAML checking error')
     return passed
 
 
@@ -342,14 +337,18 @@ def check_config(config):
                           },
         },
     ]
-    result = check_required_keys(dict(config), required_keys)
-    check_unsupported(dict(config), required_keys)
+    try:
+        result = check_required_keys(dict(config), required_keys)
+        check_unsupported(dict(config), required_keys)
+    except FailedInitialization:
+        raise
+    except Exception as e:
+        raise FailedInitialization(Exception(f"Unexpected exception: {e}"))
     return config if result else None
 
 
 def read_config(checking=False):
     """Open the YAML configuration file and optionally check the contents"""
-
     try:
         yaml.FullLoader.add_constructor('!secret', secret_yaml)
         yaml_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), CONFIG_YAML)

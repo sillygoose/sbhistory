@@ -1,10 +1,10 @@
 ## sbhistory
-Application to pull Sunny Boy inverter data from one or more inverters and send to a InfluxDB 2.x database (InfluxDB 1.8.x is also supported).  Additional features allow modeling irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
+Application to pull Sunny Boy inverter data from one or more inverters and send to a InfluxDB2 database.  Additional features allow modeling irradiance for a specific location or import irradiance CSV files from a Seaward irradiance meter for checking model accuracy.
 
 #
 ## What's new
 #### 1.1.0
-- new `production` option, this will query the SMA inverter(s) and write daily, monthly, and tearly totals to InfluxDB2.
+- new `production` option, this will query the SMA inverter(s) and write daily, monthly, and yearly totals to InfluxDB2.
 
 #
 ## Installation
@@ -19,7 +19,7 @@ Python 3.8 or better is required, you can then install the Python requirements f
 ## Use
 Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for the data.
 
-Rename the `sample_secrets.yaml` file to `secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  The `secrets.yaml` file is tagged in `.gitignore` and will not be included in the repository but if you wish you can put `secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
+Rename the `sample_secrets.yaml` file to `.sbhistory_secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  Any secrets files are tagged in `.gitignore` and will not be included in the repository but if you wish you can put `.sbhistory_secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
 
 Run the application in VS Code or from the command line:
 
@@ -39,7 +39,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
         _inverter       inverter name(s), site
         _field          today (kWh), month (kWh), year (kWh)
 
-    Measurments are written at midnight on the given period and running totals are updated by **multisma2**.
+    Measurements are written at midnight on the given period and running totals are updated by **multisma2**.
 
 - daily_history
 
