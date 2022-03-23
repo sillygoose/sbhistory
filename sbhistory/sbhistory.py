@@ -91,7 +91,7 @@ def main():
         return
 
     logfiles.start(config)
-    _LOGGER.info(f"multisma2 inverter collection utility {version.get_version()}, PID is {os.getpid()}")
+    _LOGGER.info(f"sbhistory inverter utility {version.get_version()}, PID is {os.getpid()}")
 
     try:
         sbhistory = SBHistory(read_config(checking=True))

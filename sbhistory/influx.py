@@ -70,8 +70,8 @@ class InfluxDB:
         if not self.check_config(config):
             return False
         if not config.enable:
-            _LOGGER.error(f"The influxdb 'enable' option must be enabled to use 'sbhistory': '{config.enable}'")
-            return False
+            _LOGGER.info(f"The InfluxDB database is disabled")
+            return True
         try:
             self._bucket = config.bucket
             self._client = InfluxDBClient(url=config.url, token=config.token, org=config.org)
@@ -100,14 +100,18 @@ class InfluxDB:
         return True
 
     def stop(self):
-        if self._write_api:
-            self._write_api.close()
-            self._write_api = None
-        if self._client:
-            self._client.close()
-            self._client = None
+        if self._enabled:
+            if self._write_api:
+                self._write_api.close()
+                self._write_api = None
+            if self._client:
+                self._client.close()
+                self._client = None
 
     def write_points(self, points):
+        if not self._enabled:
+            return True
+
         if not self._write_api:
             return False
         try:
@@ -119,6 +123,9 @@ class InfluxDB:
         return result
 
     def write_history(self, site, topic):
+        if not self._enabled:
+            return True
+
         if not self._write_api:
             return False
 

@@ -69,6 +69,10 @@ def process(directory, tzinfo, influxdb):
                 print()
                 influxdb.write_points(lp_points)
 
+    except FileNotFoundError as e:
+        _LOGGER.error(f"{e}")
+        return None
+
     except Exception as e:
         print()
         _LOGGER.error(f"An error occurred in {entry.name}, line {reader.line_num}: {e}")
