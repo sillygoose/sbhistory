@@ -1,6 +1,7 @@
 # Edit this file to reflect your site details, the sbhistory software uses
 # the site, solar properties, database, and inverter settings from multisma2 and adds
 # a few of its own for controlling the optional outputs.
+
 sbhistory:
   # Select the outputs you want to populate the database
   #   - 'production' is the inverter daily, monthly, and annual production
@@ -9,21 +10,21 @@ sbhistory:
   #   - 'irradiance' is an estimate of local irradiation (W/m²) at the panel surface
   #   - 'seaward' imports Seaboard meter CSV irradiance files
   production:
-    enable: True
-    start: '2020-06-01'
-    stop: '2021-10-06'
+    enable: False
+    start: '2022-03-01'
+    stop: '2022-03-12'
 
   daily_history:
-    enable: True
-    start: '2020-06-01'
+    enable: False
+    start: '2022-03-10'
 
   fine_history:
     enable: False
-    start:  '2021-10-01'
+    start:  '2022-03-01'
 
   irradiance:
-    enable: False
-    start:  '2021-10-01'
+    enable: True
+    start:  '2022-03-01'
 
   seaward:
     enable: False

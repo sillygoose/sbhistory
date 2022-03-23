@@ -3,8 +3,9 @@ Application to pull Sunny Boy inverter data from one or more inverters and send 
 
 #
 ## What's new
-#### 1.1.0
+#### 1.1.1
 - new `production` option, this will query the SMA inverter(s) and write daily, monthly, and yearly totals to InfluxDB2.
+- changed secrets file to be 'sbhistory_secrets.yaml'
 
 #
 ## Installation
@@ -19,7 +20,7 @@ Python 3.8 or better is required, you can then install the Python requirements f
 ## Use
 Make sure your InfluxDB database has an infinite retention policy, or at least longer than the start date for the data.
 
-Rename the `sample_secrets.yaml` file to `.sbhistory_secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  Any secrets files are tagged in `.gitignore` and will not be included in the repository but if you wish you can put `.sbhistory_secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
+Rename the `sample_secrets.yaml` file to `sbhistory_secrets.yaml` and edit to match your site (if you don't wish to use secrets then edit `sbhistory.yaml` to remove the `!secret` references).  Any secrets files are tagged in `.gitignore` and will not be included in the repository but if you wish you can put `.sbhistory_secrets.yaml` in any parent directory as `sbhistory` will start in the current directory and look in each parent directory up to your home directory for it (or just the current directory if you are not running in a user profile).
 
 Run the application in VS Code or from the command line:
 
@@ -53,7 +54,7 @@ Outputs are one per inverter, and if there is more than one inverter in your sit
 
 - fine_history
 
-    `fine history `is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
+    `fine history` is the inverter(s) total Wh meter recorded at 5 minute periods throughout the day:
 
         _measurement    production
         _inverter       inverter name(s), site

@@ -17,7 +17,7 @@ from exceptions import FailedInitialization
 
 
 CONFIG_YAML = 'sbhistory.yaml'
-SECRET_YAML = '.sbhistory_secrets.yaml'
+SECRET_YAML = 'sbhistory_secrets.yaml'
 
 JSON_TYPE = Union[List, Dict, str]  # pylint: disable=invalid-name
 DICT_T = TypeVar("DICT_T", bound=Dict)  # pylint: disable=invalid-name
@@ -107,11 +107,10 @@ def _load_secret_yaml(secret_path: str) -> JSON_TYPE:
         secrets = load_yaml(secret_path)
         if not isinstance(secrets, dict):
             raise ConfigError("Secrets is not a dictionary")
+        _SECRET_CACHE[secret_path] = secrets
 
     except FileNotFoundError:
         secrets = {}
-
-    _SECRET_CACHE[secret_path] = secrets
     return secrets
 
 
@@ -274,8 +273,8 @@ def check_config(config):
                                   {'start': {'required': True, 'keys': [], 'type': str}},
                               ]}},
                               {'seaward': {'required': False, 'keys': [
-                                  {'enable': {'required': True, 'keys': [], 'type': bool}},
-                                  {'path': {'required': True, 'keys': [], 'type': str}},
+                                  {'enable': {'required': False, 'keys': [], 'type': bool}},
+                                  {'path': {'required': False, 'keys': [], 'type': str}},
                               ]}},
                           ],
                           },
@@ -357,6 +356,8 @@ def read_config(checking=False):
         if config and checking:
             config = check_config(config)
 
+    except ConfigError as e:
+        raise FailedInitialization(e)
     except FailedInitialization:
         raise
     except Exception as e:

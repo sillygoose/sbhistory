@@ -21,7 +21,7 @@ from exceptions import FailedInitialization
 _LOGGER = logging.getLogger("sbhistory")
 
 
-class Multisma2:
+class SBHistory:
     class NormalCompletion(Exception):
         pass
 
@@ -44,9 +44,9 @@ class Multisma2:
                 raise
 
             self._wait()
-            raise Multisma2.NormalCompletion
+            raise SBHistory.NormalCompletion
 
-        except (KeyboardInterrupt, Multisma2.NormalCompletion, Multisma2.FailedInitialization):
+        except (KeyboardInterrupt, SBHistory.NormalCompletion, SBHistory.FailedInitialization):
             # The _stop() is also shielded from termination.
             try:
                 with DelayedKeyboardInterrupt():
@@ -59,7 +59,7 @@ class Multisma2:
         self._site = Site(self._session, self._config)
         result = await self._site.start()
         if not result:
-            raise Multisma2.FailedInitialization
+            raise SBHistory.FailedInitialization
 
     async def _astop(self):
         _LOGGER.info("Closing sbhistory application")
@@ -94,8 +94,8 @@ def main():
     _LOGGER.info(f"multisma2 inverter collection utility {version.get_version()}, PID is {os.getpid()}")
 
     try:
-        multisma2 = Multisma2(read_config(checking=True))
-        multisma2.run()
+        sbhistory = SBHistory(read_config(checking=True))
+        sbhistory.run()
     except FailedInitialization as e:
         _LOGGER.error(f"{e}")
     except Exception as e:
