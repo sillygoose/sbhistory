@@ -3,6 +3,9 @@ Application to pull Sunny Boy inverter data from one or more inverters and send 
 
 #
 ## What's new
+#### 1.1.4
+- new `patches` option to allow update of erroneous database entries
+
 #### 1.1.3
 - new `production` option, this will query the SMA inverter(s) and write daily, monthly, and yearly totals to InfluxDB2.
 - changed secrets file to be 'sbhistory_secrets.yaml'

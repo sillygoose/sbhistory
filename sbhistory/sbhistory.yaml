@@ -11,8 +11,8 @@ sbhistory:
   #   - 'seaward' imports Seaboard meter CSV irradiance files
   production:
     enable: False
-    start: '2022-03-01'
-    stop: '2022-03-12'
+    start: '2022-01-01'
+    stop: '2022-03-15'
 
   daily_history:
     enable: False
@@ -30,6 +30,20 @@ sbhistory:
     enable: False
     path:   !secret sbhistory_seaward_file_path
 
+  # Patches
+  # One entry for each database patch.
+  #   time              UTC time of record to change
+  #   measurement       _measurement name
+  #   field             _field name
+  #   inverter          _inverter name
+  #   value             new value
+#  patches:
+#    - patch:
+#        time:           '2022-01-01T05:00:00Z'
+#        measurement:    'production'
+#        inverter:       'site'
+#        field:          'year'
+#        value:          '16096.809'
 
 # This is the contents of your multisma2 YAML file for the database, inverter,and site
 # specifications.

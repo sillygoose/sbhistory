@@ -5,6 +5,7 @@ import logging
 import dateutil
 import datetime
 from dateutil.relativedelta import relativedelta
+from dateutil.parser import isoparse
 
 from astral.sun import sun
 from astral import LocationInfo
@@ -287,6 +288,48 @@ class Site:
             return
         seaward.process(directory, tzinfo, self._influx)
 
+    async def populate_patches(self, config):
+        try:
+            patches = config.sbhistory.patches
+        except Exception as e:
+            #_LOGGER.info(f"Nothing to do, no patches found")
+            return
+
+        for patch_record in config.sbhistory.patches:
+            patch = patch_record.get('patch', None)
+            time_str = patch.get('time')
+            measurement = patch.get('measurement')
+            inverter = patch.get('inverter')
+            field = patch.get('field')
+            value = patch.get('value')
+
+            date = isoparse(time_str)
+            ts = int(date.timestamp())
+
+            db_value = None
+            db_type = ''
+            try:
+                db_value = int(value)
+                db_type = 'i'
+            except Exception as e:
+                try:
+                    db_value = float(value)
+                except Exception as e:
+                    _LOGGER.error(f"Unexpected patch value type, expected 'int' or 'float'")
+            if db_value is None:
+                return
+            try:
+                _LOGGER.info(f"Patching database value")
+                lp_points = []
+                # sample: production,_inverter=site today=800.0 1556813561098
+                lp = f"{measurement},_inverter={inverter} {field}={db_value}{db_type} {ts}"
+                lp_points.append(lp)
+                self._influx.write_points(lp_points)
+            except Exception as e:
+                _LOGGER.error(f"An exception occurred in populate_patches(): {e}")
+
+        return
+
     async def run(self):
         config = self._config
         await self.populate_production(config)
@@ -294,3 +337,4 @@ class Site:
         await self.populate_seaward(config)
         await self.populate_daily_history(config)
         await self.populate_fine_history(config)
+        await self.populate_patches(config)

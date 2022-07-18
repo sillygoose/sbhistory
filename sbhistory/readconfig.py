@@ -276,6 +276,16 @@ def check_config(config):
                                   {'enable': {'required': False, 'keys': [], 'type': bool}},
                                   {'path': {'required': False, 'keys': [], 'type': str}},
                               ]}},
+                              {'patches': {'required': False, 'keys': [
+                                  {'patch': {'required': True, 'keys': [
+                                      {'time': {'required': True, 'keys': [], 'type': str}},
+                                      {'measurement': {'required': True, 'keys': [], 'type': str}},
+                                      {'field': {'required': True, 'keys': [], 'type': str}},
+                                      {'inverter': {'required': True, 'keys': [], 'type': str}},
+                                      {'value': {'required': True, 'keys': [], 'type': str}},
+                                  ]}},
+                              ]}},
+
                           ],
                           },
             'multisma2': {'required': True, 'keys':

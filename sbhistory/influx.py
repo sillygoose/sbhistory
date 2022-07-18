@@ -88,6 +88,7 @@ class InfluxDB:
                 raise Exception(f"Failed to get client query_api() object from {config.url}")
             try:
                 query_api.query(f'from(bucket: "{self._bucket}") |> range(start: -1m)')
+                self._enabled = True
                 _LOGGER.info(f"Connected to the InfluxDB database at {config.url}, bucket '{self._bucket}'")
             except Exception:
                 raise Exception(f"Unable to access bucket '{self._bucket}' at {config.url}")
